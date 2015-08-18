@@ -1,0 +1,37 @@
+Namespaces:
+  =: io.murano.resources
+  std: io.murano
+
+Name: DockerInstance
+
+Extends:
+  - LinuxMuranoInstance
+
+Methods:
+  initialize:
+    Body:
+      - $.az: null
+
+  prepareStackTemplate:
+    Arguments:
+      instanceTemplate:
+        Contract: {}
+    Body:
+      - If: $.az = null
+        Then:
+          - Return: $instanceTemplate
+
+      - $template:
+          resources:
+            $.name:
+              properties:
+                availability_zone: $.az
+      - $instanceTemplate: $instanceTemplate.mergeWith($template)
+      - Return: $instanceTemplate
+
+  setAZ:
+    Arguments:
+      - az:
+          Contract: $.notNull()
+    Body:
+      - $.az: $az

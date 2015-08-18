@@ -1,0 +1,86 @@
+Namespaces:
+  =: io.murano.apps.docker
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+  cls: io.murano.apps.docker.kubernetes
+
+Name: MagentoWebApp
+
+Extends: std:Application
+
+Properties:  
+  name:
+    Contract: $.string().notNull()
+
+  port:
+    Contract: $.int().notNull().check($ > 0)
+
+  backendip:
+    Contract: $.string().notNull()
+
+  dockerCluster:
+    Contract: $.class(cls:DockerCluster).notNull()
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+ 
+  _getAppName:
+    Body:
+      - Return: toLower($.name)
+
+  _getImage:
+    Body:
+      - $drIp: $.dockerCluster.getIp()
+      #- $drIp: $.dockerCluster.masterNode.instance.floatingIpAddress
+      - Return: format('{0}:5000/{1}:latest', $drIp, 'magento-web')
+
+  getNextInstance:
+    Body:
+      - Return: $.dockerCluster.getWorker().instance
+
+  deploy:
+    Body:
+      - If: not $.getAttr($appDeployed, false)
+        Then:
+          - $._environment.reporter.report($this, 'Start ...')
+          - $.dockerCluster.deploy()
+          - $._environment.reporter.report($this, 'Environment ready ...')
+          - $registryIp: $.dockerCluster.getIp()
+          - $instance: $.getNextInstance()
+          - $appHostIp: $instance.floatingIpAddress
+          - $envURL: format('MYSQL_HOST={0},MYSQL_DATABASE=magento,MYSQL_USER=magento,MYSQL_PASSWORD=magento,MAGENTO_URL=http://{1}/', $.backendip, $appHostIp)
+          - $endpoint: format('http://{0}:2375', $appHostIp)
+          - $image: $._getImage()
+          - $._environment.reporter.report($this, 'Registry ip {0}, backend ip {1}'.format($registryIp, $.backendip))
+          - $._environment.reporter.report($this, 'Start to install magento on {0}, floatingIp {1}'.format($instance.name, $appHostIp))
+          - $tmpname: format('{0}_{1}', $appHostIp, $.port)
+          - $template:
+              resources:
+                $tmpname:
+                  type: 'DockerInc::Docker::Container'
+                  properties:
+                    docker_endpoint: $endpoint
+                    env: 
+                      Fn::Split:
+                      - ','
+                      - $envURL
+                    image: $image
+                    memory: 0
+                    name: ''
+                    port_specs:
+                      - 80
+                    port_bindings:
+                      80: $.port
+
+          - $._environment.stack.updateTemplate($template)
+          - $._environment.stack.push()
+          - $deep: $endpoint.split(':')
+          - If: len($deep) > 2
+            Then:
+              $url: format('{0}:{1}:{2}', $deep[0], $deep[1], $.port)
+          - $._environment.reporter.report($this, format('Application {0} is available at {1}', $.name, $url))
+          - $.setAttr($appDeployed, true)
+

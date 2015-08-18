@@ -1,0 +1,43 @@
+Version: 2
+
+Application:
+  ?:
+    type: io.murano.apps.docker.MagentoWebApp
+  name: $.appConfiguration.name
+  port: $.appConfiguration.port
+  dockerCluster: $.appConfiguration.dockerCluster
+  backendip: $.appConfiguration.backendip
+
+Forms:
+  - appConfiguration:
+      fields:
+        - name: license
+          type: string
+          description: Apache License, Version 2.0
+          hidden: true
+          required: false
+        - name: name
+          type: string
+          label: Application Name
+          initial: Docker Magento App
+          description: >-
+            Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
+            underline are allowed
+        - name: backendip
+          type: string
+          label: Magento db ip
+          description: >-
+             Magento db ip
+          required: true
+        - name: port
+          type: integer
+          label: Docker Port
+          description: >-
+             Binding Port
+          initial: 80
+          required: true
+        - name: dockerCluster
+          type: io.murano.apps.docker.kubernetes.DockerCluster
+          label: Docker cluster
+          description: >-
+            Docker service

@@ -1,0 +1,9 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.docker.DockerRegistry
+Name: Docker Registry
+Description: |
+Author: 'HUAWEI'
+Tags: [ Docker Registry ]
+Classes:
+ io.murano.apps.docker.DockerRegistry: DockerRegistry.yaml

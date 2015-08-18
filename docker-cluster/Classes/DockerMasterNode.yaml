@@ -1,0 +1,22 @@
+Namespaces:
+  =: io.murano.apps.docker
+  std: io.murano
+  res: io.murano.resources
+  sys: io.murano.system
+
+Name: DockerMasterNode
+
+Extends: DockerNode
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+
+  deployInstance:
+    Body:
+      - If: not $.getAttr(instanceDeployed, false)
+        Then:
+          - $._environment.reporter.report($this, 'Creating Master Node')
+          - $.super($.deployInstance())
+          - $.setAttr(instanceDeployed, true)

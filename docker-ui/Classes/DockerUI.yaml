@@ -1,0 +1,66 @@
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may
+#  not use this file except in compliance with the License. You may obtain
+#  a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations
+#  under the License.
+
+Namespaces:
+  =: io.murano.apps.docker
+  std: io.murano
+
+Name: DockerUI
+
+Extends: std:Application
+
+Properties:
+  name:
+    Contract: $.string().notNull()
+
+  host:
+    Contract: $.class(DockerContainerHost).notNull()
+
+  publish:
+    Contract: $.bool().notNull()
+    Default: true
+
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+      - $._scope: switch($.publish, $ => public, not $ => internal)
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $._environment.reporter.report($this, 'Installing DockerUI')
+
+          - $volumes:
+              '/var/run/docker.sock': new(DockerHostVolume, name => 'varrun', path => '/var/run/docker.sock') 
+
+          - $.host.hostContainer(
+                name => $.name,
+                image => 'dockerui/dockerui',
+                commands => list(),
+                env => dict(),
+                ports => list(9000),
+                volumes => $volumes
+              )
+          - $.host.deploy()
+          
+          - $._environment.reporter.report($this, 'Docker UI is ready')
+          - $.setAttr(deployed, true)
+
+      - If: $.publish
+        Then:
+          - $endpoints: $.applicationEndpoints.where($.scope = $this._scope).select(format('http://{0}:{1}', $.address, $.port))
+          - $._environment.reporter.report($this, 'DockerUI {0} is available at {1}'.format($.name, join(', ', $endpoints)))
+        Else:
+          - $._environment.reporter.report($this, 'DockerUI {0} has deployed but is not accessible from outside'.format($.name))

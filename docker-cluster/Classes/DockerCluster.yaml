@@ -1,0 +1,268 @@
+Namespaces:
+  =: io.murano.apps.docker
+  std: io.murano
+  res: io.murano.resources
+  sys: io.murano.system
+  docker: io.murano.apps.docker
+
+Name: DockerCluster
+
+Extends:
+  - DockerContainerHost
+
+Properties:
+  name:
+    Contract: $.string().notNull()
+
+  masterNode:
+    Contract: $.class(DockerMasterNode).notNull()
+
+  minionNodes:
+    Contract:
+      - $.class(DockerMinionNode).notNull()
+      - 1
+
+  nodeCount:
+    Contract: $.int().notNull().check($ > 0)
+    Usage: InOut
+
+  availabilityZones:
+    Contract:
+      - $.string().notNull()
+
+  dockerRegistry:
+    Contract: $.string()
+
+  applicationEndpoints:
+    Contract:
+      - port: $.int().notNull().check($ > 0)
+        address: $.string().notNull()
+        scope: $.string().notNull().check($ in list(public, cloud, internal, host))
+        portScope: $.string().notNull().check($ in list(public, cloud, internal, host))
+        containerPort: $.int().notNull().check($ > 0)
+        applicationName: $.string().notNull()
+        protocol: $.string().notNull().check($ in list(TCP, UDP))
+    Default: []
+    Usage: Out
+
+  containers:
+    Contract:
+      - name: $.string().notNull()
+        instance: $.class(DockerMinionNode).notNull()
+    Default: []
+    Usage: Out
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $securityGroupIngress:
+              - ToPort: 5000
+                FromPort: 5000
+                IpProtocol: tcp
+                External: $.masterNode.instance.assignFloatingIp
+          - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)
+
+          - $idx: 0
+          - While: $idx < $.nodeCount
+            Do:
+              - $.minionNodes[$idx].instance.setAZ($.getAZ())
+              - $idx: $idx + 1
+
+          - $.setAttr(deployed, true)
+
+      - $prevNodeCount: $.getAttr(lastNodeCount, 0)
+
+      - If: $prevNodeCount != $.nodeCount
+        Then:
+          - $._environment.reporter.report($this, 'Creating Docker cluster...')
+          - Parallel:
+              - Do: $.masterNode.deployInstance()
+              - Do: $.minionNodes.take($.nodeCount).pselect($.deployInstance())
+          - Parallel:
+              - Do: $.minionNodes.take($.nodeCount).pselect($.setupDockerRegistry($.dockerRegistry))
+          - $.setAttr(lastNodeCount, $.nodeCount)
+
+      - $._environment.reporter.report($this, format('Cluster is up and running, Docker Master is available at {0}', $.getIp()))
+
+
+  getIp:
+    Body:
+      - Return: coalesce($.masterNode.instance.floatingIpAddress, $.masterNode.getIp())
+
+
+  getAZ:
+    Body:
+      - $AZIdx: $.getAttr(AZIdx, 0)
+      - $AZIdx: $AZIdx + 1
+      - If: $AZIdx >= len($.availabilityZones)
+        Then:
+          - $AZIdx: 0
+      - $.setAttr(AZIdx, $AZIdx)
+      - Return: $.availabilityZones[$AZIdx]
+
+
+  getWorker:
+    Body:
+      - $WorkerIdx: $.getAttr(WorkerIdx, 0)
+      - $WorkerIdx: $WorkerIdx + 1
+      - If: $WorkerIdx >= $.nodeCount
+        Then:
+          - $WorkerIdx: 0
+      - $.setAttr(WorkerIdx, $WorkerIdx)
+      - $worker: $.minionNodes[$WorkerIdx]
+      - $._environment.reporter.report($this, format('Worker is {0}', $worker.instance.name))
+      - Return: $worker
+
+
+  hostContainer:
+    Arguments:
+      - container:
+          Contract: $.class(DockerContainer).notNull()
+    Body:
+      - $.deploy()
+      - $.deleteContainer($container.name)
+      - $portBindings: {}
+      - $newEndpoints: []
+      - If: $.dockerRegistry != null and $.dockerRegistry != ''
+        Then:
+          - $image: format('{0}/{1}', $.dockerRegistry, $container.image)
+        Else:
+          - $image: $container.image
+      - $instance: $.getWorker().instance
+      - $._pullImage(instance => $instance, image => $image)
+
+
+  deleteContainer:
+    Arguments:
+      - name:
+          Contract: $.string().notNull()
+    Body:
+      - If: $name in $.containers.select(dict(name => str($.name)))
+        Then:
+          - $._environment.reporter.report($this, 'Deleting container {0}'.format($name))
+          - $._removeApplicationEndpoints($name)
+          - $._releaseApplicationPorts($name)
+          - $.containers: $.containers.where($ != $name)
+          - $resources: new(sys:Resources)
+          - $template: $resources.yaml('RemoveContainer.template').bind(dict(name => $name))
+          - $instance.agent.call($template, $resources)
+          - $._environment.reporter.report($this, 'Container {0} deleted'.format($name))
+
+
+  getEndpoints:
+    Arguments:
+      - applicationName:
+          Contract: $.string().notNull()
+    Body:
+      - Return: $.applicationEndpoints.where($.applicationName = $applicationName)
+
+  _getPortSpec:
+    Arguments:
+      - applicationPort:
+          Contract: $.class(ApplicationPort).notNull()
+    Body:
+      - If: $applicationPort.protocol = UDP
+        Then:
+          - Return: format('{0}/udp', $applicationPort.port)
+        Else:
+          - Return: str($applicationPort.port)
+
+  _pullImage:
+    Arguments:
+      - instance:
+          Contract: $.class(DockerInstance).notNull()
+      - image:
+          Contract: $.string().notNull()
+    Body:
+      - $._environment.reporter.report($this, 'Pulling app image {0}'.format($image))
+      - $resources: new(sys:Resources)
+      - $template: $resources.yaml('PullImage.template').bind(dict(image => $image))
+      - $instance.agent.call($template, $resources)
+
+  _acquirePort:
+    Arguments:
+      - applicationPort:
+          Contract: $.class(ApplicationPort).notNull()
+      - applicationName:
+          Contract: $.string().notNull()
+    Body:
+      - $portMap: $.getAttr(portMap, dict())
+      - $applicationPorts: $.getAttr(applicationPorts, dict())
+      - $key: format('{0}-{1}-{2}', $applicationPort.port, $applicationPort.protocol, $applicationName)
+
+      - If: $key in $applicationPorts.keys()
+        Then:
+          - Return: $applicationPorts.get($key)
+
+      - $port: str($applicationPort.port)
+      - If: $port in $portMap
+        Then:
+          - $port: '1025'
+      - While: $port in $portMap
+        Do:
+          - $port: str(int($port) + 1)
+
+      - $portMap[$port]: $applicationName
+      - $applicationPorts[$key]: $port
+
+      - $.setAttr(portMap, $portMap)
+      - $.setAttr(applicationPorts, $applicationPorts)
+      - Return: int($port)
+
+
+  _releaseApplicationPorts:
+    Arguments:
+      - applicationName:
+          Contract: $.string().notNull()
+    Body:
+      - $portMap: $.getAttr(portMap, dict())
+      - $applicationPorts: $.getAttr(applicationPorts, dict())
+      - $newPortMap: {}
+      - $newApplicationPorts: {}
+      - $portsToDelete: []
+      - For: port
+        In: $portMap.keys()
+        Do:
+          - $value: $portMap.get($port)
+          - If: $value = $applicationName
+            Then:
+              - $portsToDelete: $portsToDelete + list($port)
+            Else:
+              - $newPortMap[$port]: $value
+      - For: key
+        In: $applicationPorts.keys()
+        Do:
+          - $value: $applicationPorts.get($key)
+          - If: not $value in $portsToDelete
+            Then:
+              - $newApplicationPorts[$key]: $value
+      - $.setAttr(portMap, $newPortMap)
+      - $.setAttr(applicationPorts, $newApplicationPorts)
+
+
+  _getResourceName:
+    Arguments:
+      - applicationName:
+          Contract: $.string().notNull()
+    Body:
+      - Return: format('{0}-{1}', $applicationName, $.id())
+
+
+  _removeApplicationEndpoints:
+    Arguments:
+      - applicationName:
+          Contract: $.string().notNull()
+    Body:
+      - $.applicationEndpoints: $.applicationEndpoints.where($.applicationName != $applicationName)
+
+
+  getInternalScopeId:
+    Body:
+      Return: $.id()

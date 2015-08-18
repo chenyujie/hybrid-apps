@@ -1,0 +1,35 @@
+Namespaces:
+  =: io.murano.apps.docker
+  std: io.murano
+  res: io.murano.resources
+  sys: io.murano.system
+
+Name: DockerMinionNode
+
+Extends: DockerNode
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+      - $._cluster: $.find(DockerCluster).require()
+
+  deployInstance:
+    Body:
+      - If: not $.getAttr(instanceDeployed, false)
+        Then:
+          - $._environment.reporter.report($this, 'Creating Node {0}'.format($.instance.name))
+          - $.super($.deployInstance())
+          - $.setAttr(instanceDeployed, true)
+
+  setupDockerRegistry:
+    Arguments:
+      - dockerRegistry:
+          Contract: $.string()
+    Body:
+      - If: $.dockerRegistry != null and $.dockerRegistry != ''
+        Then:
+          - $template: $resources.yaml('SetupDockerRegistry.template').bind(dict(
+                dockerRegistry => $.dockerRegistry
+              ))
+          - $.instance.agent.call($template, $resources)

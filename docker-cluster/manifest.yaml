@@ -1,0 +1,13 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.docker.DockerCluster
+Name: Docker Cluster
+Description: |
+Author: 'HUAWEI'
+Tags: [Docker]
+Classes:
+ io.murano.apps.docker.DockerCluster: DockerCluster.yaml
+ io.murano.apps.docker.DockerMasterNode: DockerMasterNode.yaml
+ io.murano.apps.docker.DockerMinionNode: DockerMinionNode.yaml
+ io.murano.apps.docker.DockerNode: DockerNode.yaml
+ io.murano.resources.DockerInstance: DockerInstance.yaml

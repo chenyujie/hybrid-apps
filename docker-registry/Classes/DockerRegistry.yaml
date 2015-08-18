@@ -1,0 +1,34 @@
+Namespaces:
+  =: io.murano.apps.docker
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: DockerRegistry
+
+Extends: std:Application
+
+Properties:
+  name:
+    Contract: $.string().notNull()
+
+  instance:
+    Contract: $.class(res:LinuxMuranoInstance).notNull()
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $._environment.reporter.report($this, 'Creating Docker Registry server...')
+          - $.instance.deploy()
+          - $.setAttr(deployed, true)
+      - $._environment.reporter.report($this, format('Docker registry server({0}) is up and running', $.getIp()))
+
+  getIp:
+    Body:
+      - Return: coalesce($.instance.floatingIpAddress, $.instance.ipAddresses[0])

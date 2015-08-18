@@ -1,0 +1,41 @@
+Namespaces:
+  =: io.murano.apps.docker
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: EmallFrontend
+
+Extends: std:Application
+
+Properties:  
+  name:
+    Contract: $.string().notNull()
+
+  instance:
+    Contract: $.class(res:LinuxUDInstance).notNull()
+
+  emallBackend:
+    Contract: $.class(io.murano.apps.docker.EmallBackend).notNull()
+    
+  externalIp:
+    Contract: $.string().notNull()
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $._environment.reporter.report($this, 'Creating Emall frontend server...')
+          - $.instance.setCustomUserData('dbip={0}\neip={1}'.format($.emallBackend.getIp(), $.externalIp))
+          - $.instance.deploy()
+          - $.setAttr(deployed, true)
+      - $._environment.reporter.report($this, format('Emall frontend server({0}) is up and running', $.getIp()))
+
+  getIp:
+    Body:
+      - Return: coalesce($.instance.floatingIpAddress, $.instance.ipAddresses[0])

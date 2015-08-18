@@ -1,0 +1,27 @@
+Namespaces:
+  =: io.murano.apps.docker
+  std: io.murano
+  res: io.murano.resources
+  sys: io.murano.system
+
+Name: DockerNode
+
+
+Properties:
+  instance:
+    Contract: $.class(res:DockerInstance).notNull()
+
+
+Methods:
+  getIp:
+    Body:
+      Return: $.instance.ipAddresses[0]
+
+
+  deployInstance:
+    Body:
+      - $.instance.deploy()
+
+
+  setupEtcd:
+  setupNode:

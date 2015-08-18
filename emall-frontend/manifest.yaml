@@ -1,0 +1,11 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.docker.EmallFrontend
+Name: Emall Frontend
+Description: |
+Author: 'HUAWEI'
+Tags: [ Magento Database ]
+Classes:
+ io.murano.apps.docker.EmallFrontend: EmallFrontend.yaml
+Require:
+ io.murano.apps.docker.EmallBackend:
