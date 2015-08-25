@@ -1,0 +1,11 @@
+Format: 1.0
+Type: Cloud
+FullName: io.murano.apps.huawei.CloudAWS
+Name: AZ_AWS
+Description: |
+Author: 'HUAWEI'
+Tags: [ Hybrid Cloud AWS AZ ]
+Classes:
+ io.murano.apps.huawei.CloudAWS: CloudAWS.yaml
+Require:
+ io.murano.apps.huawei.Cascading:

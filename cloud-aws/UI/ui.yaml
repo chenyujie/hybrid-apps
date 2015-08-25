@@ -1,0 +1,52 @@
+Version: 2
+
+Application:
+  ?:
+    type: io.murano.apps.huawei.CloudAWS
+  name: $.appConfiguration.name
+  cascading: $.appConfiguration.cascading
+  aws_region: $.appConfiguration.aws_region
+  aws_az: $.appConfiguration.aws_az
+  ak: $.appConfiguration.ak
+  sk: $.appConfiguration.sk
+  cross_net: $.appConfiguration.cross_net
+
+Forms:
+  - appConfiguration:
+      fields:
+        - name: name
+          type: string
+          label: Hybrid Cloud AZ Name
+          description: >-
+            Enter a desired name for the Hybrid Cloud Availability Zone. Just A-Z,
+            a-z, 0-9, dash and underline are allowed
+        - name: cascading
+          type: io.murano.apps.huawei.CloudCascading
+          label: Cascading AZ
+          description: >-
+            Cascading Availability Zone
+        - name: aws_region
+          type: string
+          label: AWS Region Name
+          description: >-
+            The AWS Region where hybrid cloud AZ would be located.
+        - name: aws_az
+          type: string
+          label: AWS Availability Zone Name
+          description: >-
+            The AWS Availability Zone where hybrid cloud AZ would be located.
+        - name: ak
+          type: string
+          label: AWS Access Key
+          description: >-
+            The AWS access key
+        - name: sk
+          type: string
+          label: AWS Secret Key
+          description: >-
+            The AWS secret key
+        - name: cross_net
+          type: boolean
+          label: Enable Network Cross Clouds
+          description: >-
+            Whether Network Cross Clouds or not

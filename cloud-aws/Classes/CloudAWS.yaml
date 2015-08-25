@@ -1,0 +1,81 @@
+Namespaces:
+  =: io.murano.apps.huawei
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: CloudAWS
+
+Extends: std:Application
+
+Properties:  
+  name:
+    Contract: $.string().notNull()
+
+  cascading:
+    Contract: $.class(CloudCascading).notNull()
+
+  aws_region:
+    Contract: $.string().notNull()
+    
+  aws_az:
+    Contract: $.string().notNull()
+    
+  ak:
+    Contract: $.string().notNull()
+    
+  sk:
+    Contract: $.string().notNull()
+
+  cross_net:
+    Contract: $.bool().notNull()
+
+Methods:
+  initialize:
+    Body:
+      - $.environment: $.find(std:Environment).require()
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $template:
+              resources:
+                $.name:
+                  type: 'OS::Heat::Cloud'
+                  properties:
+                    CloudType: 'AWS'
+                    RegionName: $.aws_region
+                    AvailabilityZone: $.aws_az
+                    AccessKey: $.ak
+                    SecretKey: $.sk
+                    EnableNetworkCrossClouds: $.cross_net
+#              outputs:
+#                format('{0}-ak', $.name):
+#                  description: format('Access Key assigned to {0}', $.name)
+#                  value:
+#                    get_attr: [ $.name, SecretAccessKey ]
+
+#          - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
+          - $.environment.reporter.report($this, 'Creating AWS AZ...')
+          - $.environment.stack.updateTemplate($template)
+          - $.environment.stack.push()
+          - $.setAttr(deployed, true)
+      - $.environment.reporter.report($this, format('AWS AZ {0} is up and running', $.name))
+
+      
+  destroy:
+    Body:
+      - $template:
+          resources:
+            $.name:
+              type: 'OS::Heat::Cloud'
+              properties:
+                CloudType: 'AWS'
+                RegionName: $.aws_region
+                AvailabilityZone: $.aws_az
+                AccessKey: $.ak
+                SecretKey: $.sk
+                EnableNetworkCrossClouds: $.cross_net
+      - $.environment.stack.excludeTemplate($template)
+      - $.environment.stack.push()

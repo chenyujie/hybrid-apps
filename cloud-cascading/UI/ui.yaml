@@ -1,0 +1,18 @@
+Version: 2
+
+Application:
+  ?:
+    type: io.murano.apps.huawei.CloudCascading
+  name: $.appConfiguration.name
+
+Forms:
+  - appConfiguration:
+      fields:
+        - name: name
+          type: string
+          label: Application Name
+          initial: cascading
+          description: >-
+            Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
+            underline are allowed
+            
