@@ -123,6 +123,7 @@ Methods:
       # Any additional template preparation
       - $.instanceTemplate: $.prepareStackTemplate($.instanceTemplate)
       - $.environment.stack.updateTemplate($.instanceTemplate)
+      - $.setAttr(template, $.instanceTemplate)
       - $.environment.stack.push()
       - $outputs: $.environment.stack.output()
       # Changing this to use the .networks attribute instead of 'addresses'
@@ -220,7 +221,10 @@ Methods:
     # when whole Environment is deleted (alongside with Heat stack deletion).
     # https://bugs.launchpad.net/murano/+bug/1359998
     Body:
+      - $template: $.getAttr(template, $.instanceTemplate)
       - $.environment.instanceNotifier.untrackCloudInstance($this)
+      - $.environment.stack.excludeTemplate($template)
+      - $.environment.stack.push()
 
   createDefaultInstanceSecurityGroupRules:
     Arguments:
