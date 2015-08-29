@@ -1,0 +1,9 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.docker.EmallLB
+Name: Emall Load Balancer
+Description: |
+Author: 'HUAWEI'
+Tags: [ Magento Load Balancer ]
+Classes:
+ io.murano.apps.docker.EmallLB: EmallLB.yaml
