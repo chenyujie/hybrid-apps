@@ -11,16 +11,24 @@ Methods:
   initialize:
     Body:
       - $.customUserData: null
+      - $.format: HEAT_CFNTOOLS
 
   prepareUserData:
     Body:
+      - $environment: $.find(std:Environment).require()
       - Return:
           data: $.customUserData
-          format: HEAT_CFNTOOLS
+          format: $.format
 
   setCustomUserData:
     Arguments:
       - data:
           Contract: $.notNull()
+      - format:
+          Contract: $.string()
     Body:
+      - $environment: $.find(std:Environment).require()
       - $.customUserData: $data
+      - If: $format != null
+        Then:
+          - $.format: $format
