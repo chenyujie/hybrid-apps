@@ -1,0 +1,42 @@
+Version: 2
+
+Application:
+  ?:
+    type: io.murano.apps.huawei.CloudFS
+  name: $.appConfiguration.name
+  region: $.appConfiguration.region
+  cascading: $.appConfiguration.cascading
+  ip: $.appConfiguration.ip
+  cross_net: $.appConfiguration.cross_net
+
+Forms:
+  - appConfiguration:
+      fields:
+        - name: name
+          type: string
+          label: Hybrid Cloud AZ Name
+          regexpValidator: '^[a-zA-Z][a-zA-Z0-9._]*$'
+          description: >-
+            Enter a desired name for the Hybrid Cloud Availability Zone. Just A-Z,
+            a-z, 0-9, dash and underline are allowed
+        - name: cascading
+          type: io.murano.apps.huawei.CloudCascading
+          label: Cascading AZ
+          description: >-
+            Cascading Availability Zone
+        - name: region
+          type: string
+          label: Region Name
+          description: >-
+            The Region Name where hybrid cloud AZ would be located.
+        - name: ip
+          type: string
+          label: AZ endpoint IP
+          description: >-
+            The Availability Zone endpoint IP.
+        - name: cross_net
+          type: boolean
+          initial: true
+          label: Enable Network Cross Clouds
+          description: >-
+            Whether Network Cross Clouds or not

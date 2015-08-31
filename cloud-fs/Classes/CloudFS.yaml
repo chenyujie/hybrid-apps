@@ -1,0 +1,57 @@
+Namespaces:
+  =: io.murano.apps.huawei
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: CloudFS
+
+Extends: std:Application
+
+Properties:  
+  name:
+    Contract: $.string().notNull()
+
+  cascading:
+    Contract: $.class(CloudCascading).notNull()
+
+  region:
+    Contract: $.string().notNull()
+    
+  ip:
+    Contract: $.string().notNull()
+    
+  cross_net:
+    Contract: $.bool().notNull()
+
+Methods:
+  initialize:
+    Body:
+      - $.environment: $.find(std:Environment).require()
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $template:
+              resources:
+                $.name:
+                  type: 'OS::Heat::FusionsphereCloud'
+                  properties:
+                    AZName: $.name
+                    CloudType: 'FusionSphere'
+                    RegionName: $.region
+                    Ip: $.ip
+                    EnableNetworkCrossClouds: $.cross_net
+          - $.environment.reporter.report($this, 'Creating FusionSphere AZ...')
+          - $.environment.stack.updateTemplate($template)
+          - $.setAttr(template, $template)
+          - $.environment.stack.push()
+          - $.setAttr(deployed, true)
+      - $.environment.reporter.report($this, format('Fusion Sphere AZ {0} is up and running', $.name))
+
+  destroy:
+    Body:
+      - $template: $.getAttr(template, '{}')
+      - $.environment.stack.excludeTemplate($template)
+      - $.environment.stack.push()

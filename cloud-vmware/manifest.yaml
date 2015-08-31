@@ -1,0 +1,11 @@
+Format: 1.0
+Type: Cloud
+FullName: io.murano.apps.huawei.CloudVMware
+Name: 'AZ-VMware'
+Description: |
+Author: 'HUAWEI'
+Tags: [ Hybrid Cloud VMware AZ ]
+Classes:
+ io.murano.apps.huawei.CloudVMware: CloudVMware.yaml
+Require:
+ io.murano.apps.huawei.Cascading:

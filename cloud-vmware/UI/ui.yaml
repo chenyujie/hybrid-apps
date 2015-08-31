@@ -1,0 +1,53 @@
+Version: 2
+
+Application:
+  ?:
+    type: io.murano.apps.huawei.CloudVMware
+  name: $.appConfiguration.name
+  region: $.appConfiguration.region
+  cascading: $.appConfiguration.cascading
+  user: $.appConfiguration.user
+  password: $.appConfiguration.password
+  url: $.appConfiguration.url
+  cross_net: $.appConfiguration.cross_net
+
+Forms:
+  - appConfiguration:
+      fields:
+        - name: name
+          type: string
+          label: Hybrid Cloud AZ Name
+          description: >-
+            Enter a desired name for the Hybrid Cloud Availability Zone. Just A-Z,
+            a-z, 0-9, dash and underline are allowed
+        - name: cascading
+          type: io.murano.apps.huawei.CloudCascading
+          label: Cascading AZ
+          description: >-
+            Cascading Availability Zone
+        - name: region
+          type: string
+          label: Region Name
+          description: >-
+            The Region where this hybrid cloud AZ would be located.
+        - name: user
+          type: string
+          label: Username
+          description: >-
+            The name of the administrator user
+        - name: password
+          type: secret
+          label: Password
+          description: >-
+            The password of the administrator user
+        - name: url
+          type: string
+          label: Organization URL
+          description: >-
+            The default organization portal URL, including protocol, address, orgnization etc.
+        - name: cross_net
+          type: boolean
+          initial: true
+          label: Enable Network Cross Clouds
+          description: >-
+            Whether Network Cross Clouds or not

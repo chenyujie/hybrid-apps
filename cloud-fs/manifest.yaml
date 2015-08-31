@@ -1,0 +1,11 @@
+Format: 1.0
+Type: Cloud
+FullName: io.murano.apps.huawei.CloudFS
+Name: 'AZ-FusionSphere'
+Description: |
+Author: 'HUAWEI'
+Tags: [ Hybrid Cloud Fusion Sphere AZ ]
+Classes:
+ io.murano.apps.huawei.CloudFS: CloudFS.yaml
+Require:
+ io.murano.apps.huawei.Cascading:

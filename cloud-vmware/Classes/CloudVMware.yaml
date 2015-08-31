@@ -1,0 +1,64 @@
+Namespaces:
+  =: io.murano.apps.huawei
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: CloudVMware
+
+Extends: std:Application
+
+Properties:  
+  name:
+    Contract: $.string().notNull()
+
+  region:
+    Contract: $.string().notNull()
+    
+  cascading:
+    Contract: $.class(CloudCascading).notNull()
+
+  user:
+    Contract: $.string().notNull()
+    
+  password:
+    Contract: $.string().notNull()
+
+  url:
+    Contract: $.string().notNull()
+
+  cross_net:
+    Contract: $.bool().notNull()
+
+Methods:
+  initialize:
+    Body:
+      - $.environment: $.find(std:Environment).require()
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $template:
+              resources:
+                $.name:
+                  type: 'OS::Heat::vCloudCloud'
+                  properties:
+                    AZName: $.name
+                    CloudType: 'vCloud'
+                    UserName: $.user
+                    PassWd: $.password
+                    VcloudUrl: $.url
+                    EnableNetworkCrossClouds: $.cross_net
+          - $.environment.reporter.report($this, 'Creating VMware AZ...')
+          - $.environment.stack.updateTemplate($template)
+          - $.setAttr(template, $template)
+          - $.environment.stack.push()
+          - $.setAttr(deployed, true)
+      - $.environment.reporter.report($this, format('VMware AZ {0} is up and running', $.name))
+
+  destroy:
+    Body:
+      - $template: $.getAttr(template, '{}')
+      - $.environment.stack.excludeTemplate($template)
+      - $.environment.stack.push()
