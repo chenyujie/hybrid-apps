@@ -1,7 +1,7 @@
 Format: 1.0
 Type: Cloud
 FullName: io.murano.apps.huawei.CloudAWS
-Name: AZ_AWS
+Name: 'AZ-AWS'
 Description: |
 Author: 'HUAWEI'
 Tags: [ Hybrid Cloud AWS AZ ]

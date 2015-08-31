@@ -4,6 +4,7 @@ Application:
   ?:
     type: io.murano.apps.huawei.CloudCascading
   name: $.appConfiguration.name
+  region: $.appConfiguration.region
 
 Forms:
   - appConfiguration:
@@ -15,4 +16,10 @@ Forms:
           description: >-
             Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
             underline are allowed
-            
+        - name: region
+          type: string
+          label: Region
+          initial: hybrid
+          description: >-
+            Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
+            underline are allowed

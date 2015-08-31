@@ -12,6 +12,9 @@ Properties:
   name:
     Contract: $.string().notNull()
 
+  region:
+    Contract: $.string()
+
 Methods:
   initialize:
     Body:

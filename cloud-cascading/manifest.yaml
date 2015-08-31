@@ -1,7 +1,7 @@
 Format: 1.0
 Type: Cloud
 FullName: io.murano.apps.huawei.CloudCascading
-Name: AZ_CASCADING
+Name: HUAWEI Hybrid Cloud
 Description: |
 Author: 'HUAWEI'
 Tags: [ Hybrid Cloud AZ ]
