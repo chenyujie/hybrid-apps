@@ -10,6 +10,7 @@ Name: Instance
 Properties:
   name:
     Contract: $.string().notNull()
+    Usage: InOut
   flavor:
     Contract: $.string().notNull()
   image:
