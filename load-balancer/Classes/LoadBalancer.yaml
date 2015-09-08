@@ -1,0 +1,97 @@
+Namespaces:
+  =: io.murano.apps.huawei
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: LoadBalancer
+
+Extends: std:Application
+
+Properties:  
+  name:
+    Contract: $.string().notNull()
+
+  assignFloatingIp:
+    Contract: $.bool().notNull()
+    Default: true
+
+  eip:
+    Contract: $.string()
+    Usage: Out
+    
+  lb_id:
+    Contract: $.string()
+    Usage: Out
+
+Methods:
+  initialize:
+    Body:
+      - $.environment: $.find(std:Environment).require()
+      - $.network: $.environment.defaultNetworks.environment
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $.environment.defaultNetworks.environment.deploy()
+          - $.lb_id: randomName()
+          - $vip_name: $.lb_id + '-vip'
+          - $template:
+              resources:
+                $.lb_id:
+                  type: 'OS::Neutron::Pool'
+                  properties:
+                    name: $.name
+                    lb_method: 'ROUND_ROBIN'
+                    protocol: 'HTTP'
+                    subnet: { get_resource: $.network._getSubnetName() }
+                    vip:
+                      subnet: { get_resource: $.network._getSubnetName() }
+                      protocol_port: 80
+              outputs:
+                $vip_name:
+                  value:
+                    get_attr: [$.lb_id, vip, address]
+
+          - $.environment.reporter.report($this, 'creating load balancer...')
+          - $.environment.stack.updateTemplate($template)
+          - $.environment.stack.push()
+
+          - If: $.assignFloatingIp
+            Then:
+              - $fip_name: $.lb_id + '-fip'
+              - $eip_name: $.lb_id + '-eip'
+              - $fip_template:
+                  resources:
+                    $fip_name:
+                      type: 'OS::Neutron::FloatingIP'
+                      properties:
+                        floating_network_id: $.network._getExternalNetId()
+                        port_id:
+                          get_attr: [$.lb_id, vip, port_id]
+                  outputs:
+                    $eip_name:
+                      value:
+                        get_attr: [$fip_name, floating_ip_address]
+              - $.environment.reporter.report($this, 'allocating floating IP address...')
+              - $.environment.stack.updateTemplate($fip_template)
+              - $template: $template.mergeWith($fip_template)
+              - $.environment.stack.push()
+
+          - $outputs: $.environment.stack.output()
+          - If: $.assignFloatingIp
+            Then:
+              - $.eip: $outputs.get($eip_name)
+            Else:
+              - $.eip: $outputs.get($vip_name)
+
+          - $.setAttr(template, $template)
+          - $.setAttr(deployed, true)
+      - $.environment.reporter.report($this, format('load balancer {0} is up and running at {1}', $.name, $.eip))
+
+  destroy:
+    Body:
+      - $template: $.getAttr(template, '{}')
+      - $.environment.stack.excludeTemplate($template)
+      - $.environment.stack.push()
