@@ -1,0 +1,52 @@
+Namespaces:
+  =: io.murano.apps.huawei
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: DockerSlave
+
+Extends: std:Application
+
+Properties:  
+  name:
+    Contract: $.string().notNull()
+
+  dockerMaster:
+    Contract: $.class(DockerMaster).notNull()
+
+  dockerNodes:
+    Contract:
+      - $.class(res:DockerInstance).notNull()
+      - 1
+
+  nodeCount:
+    Contract: $.int().notNull().check($ > 0)
+    Usage: InOut
+
+  az:
+    Contract: $.string().notNull()
+
+  assignFloatingIp:
+    Contract: $.bool().notNull()
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $._environment.reporter.report($this, 'creating docker engine nodes...')
+          - $.dockerMaster.deploy()
+          - $userdata:
+              'master': $.dockerMaster.getInnerIp()
+          - Parallel:
+              - Do: $.dockerNodes.take($.nodeCount).pselect($.setCustomUserData($userdata))
+          - Parallel:
+              - Do: $.dockerNodes.take($.nodeCount).pselect($.deploy())
+          - $._environment.stack.push()
+          - $.setAttr(deployed, true)
+          - $._environment.reporter.report($this, format('{0} docker engine(s) at {1} is up and running', $.nodeCount, $.az))

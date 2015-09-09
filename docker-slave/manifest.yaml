@@ -1,0 +1,12 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.huawei.DockerSlave
+Name: Docker Slave
+Description: |
+Author: 'HUAWEI'
+Tags: [ Docker Engine k8s ]
+Classes:
+ io.murano.apps.huawei.DockerSlave: DockerSlave.yaml
+ io.murano.resources.DockerInstance: DockerInstance.yaml
+Require:
+ io.murano.apps.huawei.DockerMaster:

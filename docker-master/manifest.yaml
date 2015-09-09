@@ -1,0 +1,9 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.huawei.DockerMaster
+Name: Docker Master
+Description: |
+Author: 'HUAWEI'
+Tags: [ Docker Master k8s ]
+Classes:
+ io.murano.apps.huawei.DockerMaster: DockerMaster.yaml

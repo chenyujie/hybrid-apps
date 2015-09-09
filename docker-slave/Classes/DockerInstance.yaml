@@ -1,0 +1,154 @@
+Namespaces:
+  =: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: DockerInstance
+
+Properties:
+  name:
+    Contract: $.string().notNull()
+    Usage: InOut
+  flavor:
+    Contract: $.string().notNull()
+  image:
+    Contract: $.string().notNull()
+  keyname:
+    Contract: $.string()
+    Default: null
+  availabilityZone:
+    Contract: $.string().notNull()
+    Default: nova
+  assignFloatingIp:
+    Contract: $.bool().notNull()
+    Default: false
+  fip:
+    Contract: $.string()
+    Usage: Out
+  ip:
+    Contract: $.string()
+    Usage: Out
+
+Methods:
+  initialize:
+    Body:
+      - $.environment: $.find(std:Environment).require()
+      - $.template: {}
+      - $.customUserData: {}
+
+  setCustomUserData:
+    Arguments:
+      - data:
+          Contract: $.notNull()
+    Body:
+      - $.customUserData: $data
+
+  deploy:
+    Body:
+      - If: $.environment.defaultNetworks.environment!= null
+        Then:
+          - $.environment.defaultNetworks.environment.deploy()
+          - $.attach($.environment.defaultNetworks.environment)
+
+      - $userdata:
+          az: $.availabilityZone
+          fip: $.fip
+          ip: $.ip
+          id: $.id()
+      - $userdata: $userdata.mergeWith($.customUserData)
+
+      - $template:
+          resources:
+            $.name:
+              type: 'OS::Nova::Server'
+              properties:
+                flavor: $.flavor
+                image: $.image
+                availability_zone: $.availabilityZone
+                user_data: format('user_data="{0}"', $userdata)
+                user_data_format: 'RAW'
+                key_name: $.keyname
+      - $.template: $.template.mergeWith($template)
+
+      - $.environment.reporter.report($this, 'pushing...{0}'.format($.template))
+      - $.environment.stack.updateTemplate($.template)
+      - $.setAttr(template, $.template)
+
+  attach:
+    Arguments:
+      - net:
+          Contract: $.class(Network).notNull()
+    Body:
+      - If: $.getAttr(net_deployed, false)
+        Then:
+          - $.environment.reporter.report($this, 'attached...')
+          - $.template: $.getAttr(template, $.template)
+        Else:
+          - $.environment.reporter.report($this, 'attaching...')
+
+          - $netRef: { get_resource: $net._getNetworkName() }
+          - $subnetRef: { get_resource: $net._getSubnetName() }
+
+          - $portName: format('port-{0}-{1}', $net.id(), $.name)
+          - $portIp: format('ip-{0}', $.id())
+          - $template:
+              resources:
+                $portName:
+                  type: 'OS::Neutron::Port'
+                  properties:
+                    network: $netRef
+                    fixed_ips:
+                      - subnet: $subnetRef
+                    replacement_policy: AUTO
+              outputs:
+                $portIp:
+                  value:
+                    get_attr: [$portName, fixed_ips, 0, ip_address]
+                
+          - $.template: $.template.mergeWith($template)
+
+          - If: $.assignFloatingIp
+            Then:
+              - $floatingIpNeRef: $net._getExternalNetId()
+              - $fipName: format('fip-{0}-{1}', $net.id(), $.name)
+              - $fip: $.name + '-floatingIPaddress'
+              - $template:
+                  resources:
+                    $fipName:
+                      type: 'OS::Neutron::FloatingIP'
+                      properties:
+                        floating_network: $floatingIpNeRef
+                        port_id:
+                          get_resource: $portName
+                  outputs:
+                    $fip:
+                      value:
+                        get_attr: [$fipName, floating_ip_address]
+              - $.template: $.template.mergeWith($template)
+
+          - $.setAttr(template, $.template)
+          - $.environment.stack.updateTemplate($.template)
+          - $.environment.stack.push()
+
+          - $outputs: $.environment.stack.output()
+          - $.ip: $outputs.get($portIp)
+          - If: $.assignFloatingIp
+            Then:
+              - $.fip: $outputs.get($fip)
+
+          - $template:
+              resources:
+                $.name:
+                  properties:
+                    networks:
+                      - port:
+                          get_resource: $portName
+          - $.template: $.template.mergeWith($template)
+
+          - $.setAttr(net_deployed, true)
+
+  destroy:
+    Body:
+      - $.template: $.getAttr(template, $.template)
+      - $.environment.stack.excludeTemplate($.template)
+      - $.environment.stack.push()
