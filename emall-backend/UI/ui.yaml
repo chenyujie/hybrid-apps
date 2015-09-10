@@ -2,28 +2,33 @@ Version: 2
 
 Application:
   ?:
-    type: io.murano.apps.docker.EmallBackend
-  name: $.appConfiguration.name
+    type: io.murano.apps.huawei.EmallBackend
+  name: $.instanceConfiguration.name
   instance:
     ?:
-      type: io.murano.resources.LinuxMuranoInstance
-    name: generateHostname($.instanceConfiguration.unitNamingPattern, 1)
+      type: io.murano.resources.LinuxInstance
+    name: $.instanceConfiguration.name
     flavor: $.instanceConfiguration.flavor
     image: 'emall-backend'
     keyname: $.instanceConfiguration.keyPair
-    assignFloatingIp: $.appConfiguration.assignFloatingIP
+    assignFloatingIp: $.instanceConfiguration.assignFloatingIP
     availabilityZone: $.instanceConfiguration.availabilityZone
 
 Forms:
-  - appConfiguration:
+  - instanceConfiguration:
       fields:
         - name: name
           type: string
           label: Application Name
-          initial: EmallBackend
+          initial: emall_backend
           description: >-
             Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
             underline are allowed
+        - name: availabilityZone
+          type: azone
+          label: Availability zone
+          description: Select availability zone where the application would be installed.
+          required: false
         - name: assignFloatingIP
           type: boolean
           label: Assign Floating IP
@@ -31,9 +36,6 @@ Forms:
              Select to true to assign floating IP automatically
           initial: false
           required: false
-
-  - instanceConfiguration:
-      fields:
         - name: flavor
           type: flavor
           label: Instance flavor
@@ -43,7 +45,7 @@ Forms:
           required: false
           requirements:
             min_disk: 1
-            min_memory_mb: 1024
+            min_memory_mb: 512
             min_vcpus: 1
         - name: keyPair
           type: keypair
@@ -51,13 +53,4 @@ Forms:
           description: >-
             Select a Key Pair to control access to instances. You can login to
             instances using this KeyPair after the deployment of application.
-          required: false
-        - name: availabilityZone
-          type: azone
-          label: Availability zone
-          description: Select availability zone where the application would be installed.
-          required: false
-        - name: unitNamingPattern
-          label: Hostname
-          type: string
           required: false

@@ -1,5 +1,5 @@
 Namespaces:
-  =: io.murano.apps.docker
+  =: io.murano.apps.huawei
   res: io.murano.resources
   std: io.murano
   sys: io.murano.system
@@ -13,7 +13,7 @@ Properties:
     Contract: $.string().notNull()
 
   instance:
-    Contract: $.class(res:LinuxMuranoInstance).notNull()
+    Contract: $.class(res:LinuxInstance).notNull()
 
 Methods:
   initialize:
@@ -32,3 +32,7 @@ Methods:
   getIp:
     Body:
       - Return: coalesce($.instance.floatingIpAddress, $.instance.ipAddresses[0])
+
+  getInnerIp:
+    Body:
+      - Return: $.instance.ipAddresses[0]

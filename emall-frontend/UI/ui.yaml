@@ -1,51 +1,66 @@
 Version: 2
 
-Application:
-  ?:
-    type: io.murano.apps.docker.EmallFrontend
-  name: $.appConfiguration.name
-  emallBackend: $.appConfiguration.emallBackend
-  instance:
+Templates:
+  minionNode:
     ?:
       type: io.murano.resources.LinuxUDInstance
-    name: generateHostname($.instanceConfiguration.unitNamingPattern, 1)
+    name: generateHostname($.instanceConfiguration.unitNamingPattern, $index)
     flavor: $.instanceConfiguration.flavor
     image: 'emall-frontend'
     keyname: $.instanceConfiguration.keyPair
-    assignFloatingIp: $.appConfiguration.assignFloatingIP
+    assignFloatingIp: false
     availabilityZone: $.instanceConfiguration.availabilityZone
 
+Application:
+  ?:
+    type: io.murano.apps.huawei.EmallFrontend
+  name: $.instanceConfiguration.name
+  emallBackend: $.instanceConfiguration.emallBackend
+  emallNodes: repeat($minionNode, $.instanceConfiguration.minionCount)
+  nodeCount: $.instanceConfiguration.minionCount
+  emallLB: $.instanceConfiguration.emallLB
+
 Forms:
-  - appConfiguration:
+  - instanceConfiguration:
       fields:
         - name: name
           type: string
           label: Application Name
-          initial: EmallFrontend
+          initial: emall_frontend
           description: >-
             Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
             underline are allowed
-        - name: assignFloatingIP
-          type: boolean
-          label: Assign Floating IP
-          description: >-
-             Select to true to assign floating IP automatically
-          initial: false
+        - name: unitNamingPattern
+          type: string
+          initial: emall_frontend#
+          helpText: "# expands to machine sequence number"
           required: false
+          description: >-
+            For your convenience instance hostname can be specified.
+            Enter a name or leave blank for random name generation.
+          regexpValidator: '^[a-zA-z][-_\w#]*$'
+          maxLength: 64
+          errorMessages:
+            invalid: Just letters, numbers, underscores, sharps and hyphens are allowed.
+          label: Kubernetes node hostname pattern
+        - name: minionCount
+          type: integer
+          label: Maximum number of minions
+          initial: 3
+          required: true
+          minValue: 1
+          description: >-
+            Select maximum number of minions
         - name: emallBackend
-          type: io.murano.apps.docker.EmallBackend
+          type: io.murano.apps.huawei.EmallBackend
           label: Emall backend
           description: >-
             Emall backend service
-        - name: externalIp
-          type: string
-          label: External IP address
+        - name: emallLB
+          type: io.murano.apps.huawei.LoadBalancer
+          label: Emall Load Balancer
           description: >-
-            Enter an external visible IP address for the magento application to be visited
-            from outside. Just A-Z, a-z, 0-9, dash and underline are allowed
-
-  - instanceConfiguration:
-      fields:
+            Emall Load Balancer
         - name: flavor
           type: flavor
           label: Instance flavor
@@ -68,8 +83,4 @@ Forms:
           type: azone
           label: Availability zone
           description: Select availability zone where the application would be installed.
-          required: false
-        - name: unitNamingPattern
-          label: Hostname
-          type: string
           required: false
