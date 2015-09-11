@@ -43,8 +43,10 @@ Methods:
                 IpProtocol: tcp
                 External: true
           - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)
-          - $._environment.reporter.report($this, 'Creating Emall frontend server...')
-          - $.emallBackend.deploy()
+          - $._environment.reporter.report($this, 'creating emall frontend server...')
+          - Parallel:
+              - Do: $.emallBackend.deploy()
+              - Do: $.emallLB.deploy()
           - $userdata: ('emall="dbip:{0},eip:{1}"').format($.emallBackend.getInnerIp(), $.emallLB.eip)
           - Parallel:
               - Do: $.emallNodes.take($.nodeCount).pselect($.setCustomUserData($userdata, 'RAW'))
@@ -58,11 +60,11 @@ Methods:
           - $.setAttr(template, $.template)
           - $._environment.stack.push()
           - $.setAttr(deployed, true)
-      - $._environment.reporter.report($this, format('Emall frontend server({0}) is up and running', $.emallLB.eip))
+          - $._environment.reporter.report($this, format('emall frontend server({0}) is up and running', $.emallLB.eip))
 
   destroy:
     Body:
-      - $template: $.getAttr(template, '{}')
+      - $template: $.getAttr(template, {})
       - $._environment.stack.excludeTemplate($template)
       - $._environment.stack.push()
       - For: node
@@ -83,6 +85,6 @@ Methods:
               type: 'OS::Neutron::PoolMember'
               properties:
                 pool_id: {get_resource: $.emallLB.lb_id}
-                address: {get_attr: [$node.name, first_address]}
+                address: {get_attr: [$node.vmname, first_address]}
                 protocol_port: 80
       - $.template: $.template.mergeWith($template)

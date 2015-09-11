@@ -15,7 +15,6 @@ Methods:
 
   prepareUserData:
     Body:
-      - $environment: $.find(std:Environment).require()
       - Return:
           data: $.customUserData
           format: $.format
@@ -27,7 +26,6 @@ Methods:
       - format:
           Contract: $.string()
     Body:
-      - $environment: $.find(std:Environment).require()
       - $.customUserData: $data
       - If: $format != null
         Then:

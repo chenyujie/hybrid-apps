@@ -8,9 +8,20 @@ Name: LinuxMuranoInstance
 Extends:
   - LinuxInstance
 
+Properties:
+  agent:
+    Contract: $.class(sys:Agent)
+    Usage: Runtime
+
 Methods:
+ initialize:
+    Body:
+      - $.agent: new(sys:Agent, host => $)
+
  prepareUserData:
     Body:
+      # Create MQ queue to communicate with the VM
+      - $.agent.prepare()
       - $environment: $.find(std:Environment).require()
       - $resources: new(sys:Resources)
       - $configFile: $resources.string('Agent-v2.template')

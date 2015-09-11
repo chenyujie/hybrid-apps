@@ -24,10 +24,16 @@ Methods:
     Body:
       - If: not $.getAttr(deployed, false)
         Then:
-          - $._environment.reporter.report($this, 'Creating Emall backend server...')
+          - $._environment.reporter.report($this, 'creating emall backend server...')
+          - $securityGroupIngress:
+              - ToPort: 3306
+                FromPort: 3306
+                IpProtocol: tcp
+                External: true
+          - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)
           - $.instance.deploy()
           - $.setAttr(deployed, true)
-      - $._environment.reporter.report($this, format('Emall backend server({0}) is up and running', $.getIp()))
+          - $._environment.reporter.report($this, format('emall backend server({0}) is up and running', $.getIp()))
 
   getIp:
     Body:

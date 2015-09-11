@@ -21,11 +21,11 @@ Properties:
   availabilityZone:
     Contract: $.string().notNull()
     Default: nova
-  agent:
-    Contract: $.class(sys:Agent)
-    Usage: Runtime
   ipAddresses:
     Contract: [$.string()]
+    Usage: Out
+  vmname:
+    Contract: $.string()
     Usage: Out
   networks:
     Contract:
@@ -56,10 +56,10 @@ Methods:
   initialize:
     Body:
       - $.environment: $.find(std:Environment).require()
-      - $.agent: new(sys:Agent, host => $)
       - $.resources: new(sys:Resources)
       - $.instanceTemplate: {}
       - $._floatingIpOutputName: null
+      - $.vmname: format('{0}-{1}', $.name, $.id())
 
   # Called after the Instance template pieces are in place. It
   # is at this stage alterations to the template should be made
@@ -100,11 +100,9 @@ Methods:
       - $preparedUserData: $.prepareUserData()
       - $userData: $preparedUserData.data
       - $userDataFormat: $preparedUserData.format
-      # Create MQ queue to communicate with the VM
-      - $.agent.prepare()
       - $template:
           resources:
-            $.name:
+            $.vmname:
               type: 'OS::Nova::Server'
               properties:
                 flavor: $.flavor
@@ -114,10 +112,10 @@ Methods:
                 user_data_format: $userDataFormat
                 key_name: $.keyname
           outputs:
-            format('{0}-assigned-ips', $.name):
-              description: format('Network IPs assigned to {0} instance', $.name)
+            format('{0}-assigned-ips', $.vmname):
+              description: format('Network IPs assigned to {0} instance', $.vmname)
               value:
-                get_attr: [ $.name, networks ]
+                get_attr: [ $.vmname, networks ]
 
       - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
 
@@ -128,11 +126,11 @@ Methods:
       - $.environment.stack.push()
       - $outputs: $.environment.stack.output()
       # Changing this to use the .networks attribute instead of 'addresses'
-      - $.ipAddresses: $outputs.get(format('{0}-assigned-ips', $this.name)).values().flatten()
+      - $.ipAddresses: $outputs.get(format('{0}-assigned-ips', $.vmname)).values().flatten()
       - If: $._floatingIpOutputName != null
         Then:
           - $.floatingIpAddress: $outputs.get($._floatingIpOutputName)
-      - $.environment.instanceNotifier.trackCloudInstance($this)
+      #- $.environment.instanceNotifier.trackCloudInstance($this)
 
   detectPrimaryNetwork:
     Body:
@@ -190,7 +188,7 @@ Methods:
         Then:
           - $template:
               resources:
-                $.name:
+                $.vmname:
                   properties:
                     networks:
                       - port:
@@ -200,7 +198,7 @@ Methods:
         Then:
           - $template:
               resources:
-                $.name:
+                $.vmname:
                   properties:
                     security_groups:
                       - $joinResult.secGroupName
@@ -222,8 +220,8 @@ Methods:
     # when whole Environment is deleted (alongside with Heat stack deletion).
     # https://bugs.launchpad.net/murano/+bug/1359998
     Body:
+      #- $.environment.instanceNotifier.untrackCloudInstance($this)
       - $template: $.getAttr(template, $.instanceTemplate)
-      - $.environment.instanceNotifier.untrackCloudInstance($this)
       - $.environment.stack.excludeTemplate($template)
       - $.environment.stack.push()
 

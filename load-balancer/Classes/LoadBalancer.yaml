@@ -88,7 +88,7 @@ Methods:
 
           - $.setAttr(template, $template)
           - $.setAttr(deployed, true)
-      - $.environment.reporter.report($this, format('load balancer {0} is up and running at {1}', $.name, $.eip))
+          - $.environment.reporter.report($this, format('load balancer {0} is up and running at {1}', $.name, $.eip))
 
   destroy:
     Body:
