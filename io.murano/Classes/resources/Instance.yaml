@@ -59,7 +59,7 @@ Methods:
       - $.resources: new(sys:Resources)
       - $.instanceTemplate: {}
       - $._floatingIpOutputName: null
-      - $.vmname: format('{0}-{1}', $.name, $.id())
+      - $.vmname: $.name
 
   # Called after the Instance template pieces are in place. It
   # is at this stage alterations to the template should be made
