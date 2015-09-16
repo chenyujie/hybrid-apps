@@ -35,6 +35,7 @@ Methods:
       - $.environment: $.find(std:Environment).require()
       - $.template: {}
       - $.customUserData: {}
+      - $.vmname: format('{0}-{1}', $.name, $.id())
 
   setCustomUserData:
     Arguments:
@@ -45,34 +46,33 @@ Methods:
 
   deploy:
     Body:
-      - If: $.environment.defaultNetworks.environment!= null
+      - If: not $.getAttr(deployed, false)
         Then:
-          - $.environment.defaultNetworks.environment.deploy()
           - $.attach($.environment.defaultNetworks.environment)
 
-      - $userdata:
-          az: $.availabilityZone
-          fip: $.fip
-          ip: $.ip
-          id: $.id()
-      - $userdata: $userdata.mergeWith($.customUserData)
-
-      - $template:
-          resources:
-            $.name:
-              type: 'OS::Nova::Server'
-              properties:
-                flavor: $.flavor
-                image: $.image
-                availability_zone: $.availabilityZone
-                user_data: format('user_data="{0}"', $userdata)
-                user_data_format: 'RAW'
-                key_name: $.keyname
-      - $.template: $.template.mergeWith($template)
-
-      - $.environment.reporter.report($this, 'pushing...{0}'.format($.template))
-      - $.environment.stack.updateTemplate($.template)
-      - $.setAttr(template, $.template)
+          - $userdata:
+              az: $.availabilityZone
+              fip: $.fip
+              ip: $.ip
+              id: $.id()
+          - $userdata: $userdata.mergeWith($.customUserData)
+    
+          - $template:
+              resources:
+                $.vmname:
+                  type: 'OS::Nova::Server'
+                  properties:
+                    flavor: $.flavor
+                    image: $.image
+                    availability_zone: $.availabilityZone
+                    user_data: format('user_data="{0}"', $userdata)
+                    user_data_format: 'RAW'
+                    key_name: $.keyname
+          - $.template: $.template.mergeWith($template)
+    
+          - $.environment.stack.updateTemplate($.template)
+          - $.setAttr(template, $.template)
+          - $.setAttr(deployed, true)
 
   attach:
     Arguments:
@@ -81,16 +81,13 @@ Methods:
     Body:
       - If: $.getAttr(net_deployed, false)
         Then:
-          - $.environment.reporter.report($this, 'attached...')
           - $.template: $.getAttr(template, $.template)
         Else:
-          - $.environment.reporter.report($this, 'attaching...')
-
           - $netRef: { get_resource: $net._getNetworkName() }
           - $subnetRef: { get_resource: $net._getSubnetName() }
 
-          - $portName: format('port-{0}-{1}', $net.id(), $.name)
-          - $portIp: format('ip-{0}', $.id())
+          - $portName: format('port-{0}', $.vmname)
+          - $portIp: format('ip-{0}', $.vmname)
           - $template:
               resources:
                 $portName:
@@ -104,14 +101,14 @@ Methods:
                 $portIp:
                   value:
                     get_attr: [$portName, fixed_ips, 0, ip_address]
-                
+
           - $.template: $.template.mergeWith($template)
 
           - If: $.assignFloatingIp
             Then:
               - $floatingIpNeRef: $net._getExternalNetId()
-              - $fipName: format('fip-{0}-{1}', $net.id(), $.name)
-              - $fip: $.name + '-floatingIPaddress'
+              - $fipName: format('fport-{0}', $.vmname)
+              - $fip: format('fip-{0}', $.vmname)
               - $template:
                   resources:
                     $fipName:
@@ -138,7 +135,7 @@ Methods:
 
           - $template:
               resources:
-                $.name:
+                $.vmname:
                   properties:
                     networks:
                       - port:

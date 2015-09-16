@@ -30,8 +30,12 @@ Methods:
                 FromPort: 5000
                 IpProtocol: tcp
                 External: $.instance.assignFloatingIp
-              - ToPort: 8080
+              - ToPort: 8083
                 FromPort: 8080
+                IpProtocol: tcp
+                External: $.instance.assignFloatingIp
+              - ToPort: 80
+                FromPort: 80
                 IpProtocol: tcp
                 External: $.instance.assignFloatingIp
           - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)

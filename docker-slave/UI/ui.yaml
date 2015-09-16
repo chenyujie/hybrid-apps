@@ -6,7 +6,7 @@ Templates:
       type: io.murano.resources.DockerInstance
     name: generateHostname($.instanceConfiguration.unitNamingPattern, $index)
     flavor: $.instanceConfiguration.flavor
-    image: 'ubuntu-docker-engine'
+    image: 'docker-slave'
     keyname: $.instanceConfiguration.keyPair
     assignFloatingIp: $.instanceConfiguration.assignFloatingIP
     availabilityZone: $.instanceConfiguration.availabilityZone

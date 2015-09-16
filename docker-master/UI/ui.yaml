@@ -9,7 +9,7 @@ Application:
       type: io.murano.resources.LinuxInstance
     name: $.instanceConfiguration.name
     flavor: $.instanceConfiguration.flavor
-    image: 'ubuntu-docker-registry'
+    image: 'docker-master'
     keyname: $.instanceConfiguration.keyPair
     assignFloatingIp: $.instanceConfiguration.assignFloatingIP
     availabilityZone: $.instanceConfiguration.availabilityZone
