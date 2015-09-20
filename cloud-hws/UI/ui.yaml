@@ -1,0 +1,56 @@
+Version: 2
+
+Application:
+  ?:
+    type: io.murano.apps.huawei.CloudHWS
+  name: $.appConfiguration.name
+  region: $.appConfiguration.region
+  cascading: $.appConfiguration.cascading
+  hws_az: $.appConfiguration.hws_az
+  ak: $.appConfiguration.ak
+  sk: $.appConfiguration.sk
+  cross_net: $.appConfiguration.cross_net
+
+Forms:
+  - appConfiguration:
+      fields:
+        - name: name
+          type: string
+          label: Hybrid Cloud AZ Name
+          regexpValidator: '^[a-zA-Z][a-zA-Z0-9._]*$'
+          description: >-
+            Enter a desired name for the Hybrid Cloud Availability Zone. Just A-Z,
+            a-z, 0-9, dash and underline are allowed
+        - name: cascading
+          type: io.murano.apps.huawei.CloudCascading
+          label: Cascading AZ
+          description: >-
+            Cascading Availability Zone
+        - name: region
+          type: string
+          label: HWS Region Name
+          description: >-
+            The HWS Region where hybrid cloud AZ would be located.
+        - name: hws_az
+          type: string
+          hidden: true
+          required: false
+          label: HWS Availability Zone
+          description: >-
+            The HWS Availability Zone where hybrid cloud AZ would be located.
+        - name: ak
+          type: secret
+          label: HWS Access Key
+          description: >-
+            The HWS access key
+        - name: sk
+          type: secret
+          label: HWS Secret Key
+          description: >-
+            The HWS secret key
+        - name: cross_net
+          type: boolean
+          initial: true
+          label: Enable Network Cross Clouds
+          description: >-
+            Whether Network Cross Clouds or not
