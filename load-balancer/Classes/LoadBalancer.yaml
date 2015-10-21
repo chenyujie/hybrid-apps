@@ -56,7 +56,6 @@ Methods:
 
           - $.environment.reporter.report($this, 'creating load balancer...')
           - $.environment.stack.updateTemplate($template)
-          - $.environment.stack.push()
 
           - If: $.assignFloatingIp
             Then:
@@ -77,8 +76,8 @@ Methods:
               - $.environment.reporter.report($this, 'allocating floating IP address...')
               - $.environment.stack.updateTemplate($fip_template)
               - $template: $template.mergeWith($fip_template)
-              - $.environment.stack.push()
 
+          - $.environment.stack.push()
           - $outputs: $.environment.stack.output()
           - If: $.assignFloatingIp
             Then:
