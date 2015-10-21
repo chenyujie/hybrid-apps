@@ -29,15 +29,15 @@ Methods:
               - ToPort: 5000
                 FromPort: 5000
                 IpProtocol: tcp
-                External: $.instance.assignFloatingIp
+                External: true
               - ToPort: 8083
                 FromPort: 8080
                 IpProtocol: tcp
-                External: $.instance.assignFloatingIp
+                External: true
               - ToPort: 80
                 FromPort: 80
                 IpProtocol: tcp
-                External: $.instance.assignFloatingIp
+                External: true
           - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)
           - $.instance.deploy()
           - $.setAttr(deployed, true)

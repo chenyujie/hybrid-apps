@@ -44,8 +44,8 @@ Forms:
             depends on this parameter.
           required: false
           requirements:
-            min_disk: 5
-            min_memory_mb: 1024
+            min_disk: 20
+            min_memory_mb: 4096
             min_vcpus: 1
         - name: keyPair
           type: keypair
