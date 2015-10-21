@@ -39,7 +39,6 @@ Forms:
           type:
             - io.murano.apps.docker.kubernetes.KubernetesPod
             - io.murano.apps.docker.DockerStandaloneHost
-            - io.murano.apps.docker.DockerCluster
           label: Container Host
           description: >-
             Select an instance of Docker contaniner hosting provider to run the app
