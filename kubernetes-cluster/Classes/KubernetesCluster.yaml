@@ -115,10 +115,10 @@ Methods:
               - Do: $.gatewayNodes.take($.gatewayCount).pselect($.restart())
 
           - $.masterNode.setupEtcd()
+          - $.masterNode.setupNode()
           - $.minionNodes.take($.nodeCount).select($.setupEtcd())
           - $.gatewayNodes.take($.gatewayCount).select($.setupEtcd())
 
-          - $.masterNode.setupNode()
           - Parallel:
               - Do: $.minionNodes.take($.nodeCount).pselect($.setupNode())
               - Do: $.minionNodes.skip($.nodeCount).pselect($.removeFromCluster())
