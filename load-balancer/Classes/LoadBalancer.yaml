@@ -91,6 +91,8 @@ Methods:
 
   destroy:
     Body:
-      - $template: $.getAttr(template, '{}')
-      - $.environment.stack.excludeTemplate($template)
-      - $.environment.stack.push()
+      - $template: $.getAttr(template, null)
+      - If: $template != null
+        Then:
+          - $.environment.stack.excludeTemplate($template)
+          - $.environment.stack.push()
