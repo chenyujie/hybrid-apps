@@ -51,7 +51,7 @@ Forms:
           required: false
         - name: dockerRegistry
           type: string
-          initial: 202.96.135.238:5000
+          initial: 202.96.135.237:5000
           label: Custom Docker registry URL
           description: >-
             URL of docker repository mirror to use. Leave empty for Docker default
