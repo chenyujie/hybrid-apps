@@ -16,6 +16,7 @@ Properties:
 Methods:
  initialize:
     Body:
+      #- $.super($.initialize())
       - $.agent: new(sys:Agent, host => $)
 
  prepareUserData:

@@ -37,9 +37,17 @@ Methods:
     Body:
       - If: not $.getAttr(instanceDeployed, false)
         Then:
-          - $._environment.reporter.report($this, 'Creating Kubernetes Node {0}'.format($.instance.name))
+          - $._environment.reporter.report($this, 'Creating minion Node {0}'.format($.instance.name))
           - $.super($.deployInstance())
           - $.setAttr(instanceDeployed, true)
+
+
+  restart:
+    Body:
+      - $.instance.restart()
+      - If: $.instance.assignFloatingIp
+        Then:
+          - $._environment.reporter.report($, 'Minion {0} available at {1}'.format($.instance.name, $.instance.floatingIpAddress))
 
 
   setupEtcd:
@@ -72,13 +80,6 @@ Methods:
           - $template: $resources.yaml('SetupFlannelNode.template')
           - $.instance.agent.call($template, $resources)
 
-          - $securityGroupIngress:
-              - ToPort: 4194
-                FromPort: 4194
-                IpProtocol: tcp
-                External: $.exposeCAdvisor
-          - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)
-
           - $._environment.reporter.report($, 'Setup Kubernetes Minion on {0}'.format($.instance.name))
           - $template: $resources.yaml('KubeMinionSetup.template').bind(dict(
                 name => $.instance.name,
@@ -89,10 +90,9 @@ Methods:
           - $.instance.agent.call($template, $resources)
           - $._registerNode()
           - $.setAttr(nodeConfigured, true)
-          - $msg: 'cAdvisor monitoring for Node {0} is now available at http://{1}:4194'
-          - $ip: $.getIp()
           - If: $.exposeCAdvisor
             Then:
+              - $msg: 'cAdvisor monitoring for Node {0} is now available at http://{1}:4194'
               - $ip: coalesce($.instance.floatingIpAddress, $.getIp())
               - $._environment.reporter.report($this, $msg.format($.instance.name, $ip))
 

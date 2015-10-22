@@ -38,6 +38,10 @@ Properties:
     Contract: $.int().notNull().check($ > 0)
     Usage: InOut
 
+  availabilityZones:
+    Contract:
+      - $.string().notNull()
+
   gatewayCount:
     Contract: $.int().notNull()
     Usage: InOut
@@ -75,34 +79,24 @@ Methods:
       - $.serviceEndpoints: $.getAttr(serviceEndpoints, list())
       - If: not $.getAttr(deployed, false)
         Then:
-          - $._environment.reporter.report($this, 'Creating VMs for Kubernetes cluster')
-          - $securityGroupIngress:
-              - ToPort: 4001
-                FromPort: 4001
-                IpProtocol: tcp
-                External: false
-              - ToPort: 7001
-                FromPort: 7001
-                IpProtocol: tcp
-                External: false
-              - ToPort: 10250
-                FromPort: 10250
-                IpProtocol: tcp
-                External: false
-              - ToPort: 8080
-                FromPort: 8080
-                IpProtocol: tcp
-                External: $.masterNode.instance.assignFloatingIp
-              - ToPort: 2380
-                FromPort: 2380
-                IpProtocol: tcp
-                External: false
-              - ToPort: 8285
-                FromPort: 8285
-                IpProtocol: udp
-                External: false
-          - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)
+          - $template:
+              resources:
+                $._environment.securityGroupManager.defaultGroupName:
+                  type: 'OS::Neutron::SecurityGroup'
+                  properties:
+                    rules:
+                      - remote_ip_prefix: '0.0.0.0/0'
+                      - remote_ip_prefix: '::/0'
+                        ethertype: 'IPv6'
+          - $._environment.stack.updateTemplate($template)
           - $.setAttr(deployed, true)
+
+      - $idx: $.getAttr(IDX, 0)
+      - While: $idx < $.nodeCount
+        Do:
+          - $.minionNodes[$idx].instance.setAZ($.getAZ())
+          - $idx: $idx + 1
+      - $.setAttr(IDX, $idx)
 
       - $prevNodeCount: $.getAttr(lastNodeCount, 0)
       - $prevGatewayCount: $.getAttr(lastGatewayCount, 0)
@@ -114,6 +108,11 @@ Methods:
               - Do: $.masterNode.deployInstance()
               - Do: $.minionNodes.take($.nodeCount).pselect($.deployInstance())
               - Do: $.gatewayNodes.take($.gatewayCount).pselect($.deployInstance())
+          - $._environment.stack.push()
+          - Parallel:
+              - Do: $.masterNode.restart()
+              - Do: $.minionNodes.take($.nodeCount).pselect($.restart())
+              - Do: $.gatewayNodes.take($.gatewayCount).pselect($.restart())
 
           - $.masterNode.setupEtcd()
           - $.minionNodes.take($.nodeCount).select($.setupEtcd())
@@ -134,6 +133,17 @@ Methods:
   getIp:
     Body:
       Return: $.masterNode.getIp()
+
+
+  getAZ:
+    Body:
+      - $AZIdx: $.getAttr(AZIdx, 0)
+      - $AZIdx: $AZIdx + 1
+      - If: $AZIdx >= len($.availabilityZones)
+        Then:
+          - $AZIdx: 0
+      - $.setAttr(AZIdx, $AZIdx)
+      - Return: $.availabilityZones[$AZIdx]
 
 
   createPod:
@@ -234,13 +244,6 @@ Methods:
                     applicationPort: $applicationPort
               - $serviceChanged: true
 
-              - $securityGroupIngress:
-                  - ToPort: $port
-                    FromPort: $port
-                    IpProtocol: toLower($applicationPort.protocol)
-                    External: $applicationPort.scope = public
-              - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)
-
           - $servicePorts: $servicePorts + $record
 
       - If: $serviceChanged
@@ -258,7 +261,6 @@ Methods:
                 serviceName => $serviceName,
                 serviceIp => $serviceIp
               )
-          - $._environment.stack.push()
       - $.setAttr(serviceEndpoints, $.serviceEndpoints)
 
 

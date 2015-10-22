@@ -11,9 +11,9 @@ Methods:
     Arguments:
       - rules:
           Contract:
-            - FromPort: $.int().notNull()
-              ToPort: $.int().notNull()
-              IpProtocol: $.string().notNull()
+            - FromPort: $.int()
+              ToPort: $.int()
+              IpProtocol: $.string()
               External: $.bool().notNull()
       - groupName:
           Contract: $.string().notNull()
@@ -34,19 +34,19 @@ Methods:
             ext_key: remote_mode
             ext_val: remote_group_id
 
-      - $stack: $.environment.stack
-      - $template:
-          resources:
-            $groupName:
-              type: 'OS::Neutron::SecurityGroup'
-              properties:
-                description: format('Composite security group of Murano environment {0}', $.environment.name)
-                rules:
-                  - port_range_min: null
-                    port_range_max: null
-                    protocol: icmp
-                    remote_ip_prefix: '0.0.0.0/0'
-      - $.environment.stack.updateTemplate($template)
+      #- $stack: $.environment.stack
+      #- $template:
+      #    resources:
+      #      $groupName:
+      #        type: 'OS::Neutron::SecurityGroup'
+      #        properties:
+      #          description: format('Composite security group of Murano environment {0}', $.environment.name)
+      #          rules:
+      #            - port_range_min: null
+      #              port_range_max: null
+      #              protocol: icmp
+      #              remote_ip_prefix: '0.0.0.0/0'
+      #- $.environment.stack.updateTemplate($template)
 
       - $ingress: $rules.select(dict(
             port_range_min => $.FromPort,
@@ -61,7 +61,7 @@ Methods:
               type: 'OS::Neutron::SecurityGroup'
               properties:
                 rules: $ingress
-      - $.environment.stack.updateTemplate($template)
+      #- $.environment.stack.updateTemplate($template)
 
       - $ingress: $rules.select(dict(
             port_range_min => $.FromPort,
@@ -71,11 +71,11 @@ Methods:
             $ext_keys_ipv6.get($.External).ext_key => $ext_keys_ipv6.get($.External).ext_val
           ))
 
-      - $template:
+      - $template6:
           resources:
             $groupName:
               type: 'OS::Neutron::SecurityGroup'
               properties:
                 rules: $ingress
+      - $template: $template.mergeWith($template6)
       - $.environment.stack.updateTemplate($template)
-      

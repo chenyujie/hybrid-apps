@@ -38,12 +38,12 @@ Properties:
 Methods:
   initialize:
     Body:
-      - $._environment: $.find(std:Environment).require()
       - $._netExplorer: new(sys:NetworkExplorer)
 
 
   deploy:
     Body:
+      - $._environment: $.find(std:Environment).require()
       - If: not $.getAttr(deployed, false)
         Then:
           - If: $.useDefaultDns and (not bool($.dnsNameserver))
@@ -64,7 +64,7 @@ Methods:
               - $template: $template.mergeWith($._createRouterInterface())
 
           - $._environment.stack.updateTemplate($template)
-          - $._environment.stack.push()
+          #- $._environment.stack.push()
           - $.setAttr(deployed, true)
 
 

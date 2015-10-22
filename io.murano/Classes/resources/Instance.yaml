@@ -19,8 +19,8 @@ Properties:
     Contract: $.string()
     Default: null
   availabilityZone:
-    Contract: $.string().notNull()
-    Default: nova
+    Contract: $.string()
+    Usage: InOut
   ipAddresses:
     Contract: [$.string()]
     Usage: Out
@@ -51,15 +51,16 @@ Properties:
     Contract:
       - $.class(std:SharedIp)
     Usage: InOut  # as it is set in setSharedIps
+    Default: null
+  lazy:
+    Contract: $.bool()
+    Default: false
 
 Methods:
   initialize:
     Body:
       - $.environment: $.find(std:Environment).require()
-      - $.resources: new(sys:Resources)
-      - $.instanceTemplate: {}
-      - $._floatingIpOutputName: null
-      - $.vmname: $.name
+      #- $.resources: new(sys:Resources)
 
   # Called after the Instance template pieces are in place. It
   # is at this stage alterations to the template should be made
@@ -69,6 +70,13 @@ Methods:
         Contract: {}
     Body:
       - Return: $instanceTemplate
+
+  setAZ:
+    Arguments:
+      - az:
+          Contract: $.notNull()
+    Body:
+      - $.availabilityZone: $az
 
   setSharedIps:
     Arguments:
@@ -80,6 +88,9 @@ Methods:
 
   deploy:
     Body:
+      - $.vmname: $.name
+      - $.instanceTemplate: {}
+      - $._floatingIpOutputName: null
 
       - $securityGroupName: coalesce(
             $.securityGroupName,
@@ -87,7 +98,9 @@ Methods:
           )
       - $.createDefaultInstanceSecurityGroupRules($securityGroupName)
       - $.detectPrimaryNetwork()
-      - $.ensureSharedIpsDeployed()
+      - If: sharedIps != null
+        Then:
+          - $.ensureSharedIpsDeployed()
       - $.ensureNetworksDeployed()
       - If: $.networks.useEnvironmentNetwork and $.environment.defaultNetworks.environment!=null
         Then:
@@ -122,15 +135,21 @@ Methods:
       # Any additional template preparation
       - $.instanceTemplate: $.prepareStackTemplate($.instanceTemplate)
       - $.environment.stack.updateTemplate($.instanceTemplate)
-      - $.setAttr(template, $.instanceTemplate)
-      - $.environment.stack.push()
+      #- $.setAttr(template, $.instanceTemplate)
+      - If: not $.lazy
+        Then:
+          - $.environment.stack.push()
+          - $.restart()
+
+  restart:
+    Body:
       - $outputs: $.environment.stack.output()
       # Changing this to use the .networks attribute instead of 'addresses'
       - $.ipAddresses: $outputs.get(format('{0}-assigned-ips', $.vmname)).values().flatten()
       - If: $._floatingIpOutputName != null
         Then:
           - $.floatingIpAddress: $outputs.get($._floatingIpOutputName)
-      #- $.environment.instanceNotifier.trackCloudInstance($this)
+      - $.environment.instanceNotifier.trackCloudInstance($this)
 
   detectPrimaryNetwork:
     Body:
@@ -182,6 +201,7 @@ Methods:
           )
       - If: $joinResult.template != null
         Then:
+          - $.setAttr(template, $joinResult.template)
           - $.instanceTemplate: $.instanceTemplate.mergeWith($joinResult.template)
 
       - If: $joinResult.portRef != null
@@ -220,10 +240,11 @@ Methods:
     # when whole Environment is deleted (alongside with Heat stack deletion).
     # https://bugs.launchpad.net/murano/+bug/1359998
     Body:
-      #- $.environment.instanceNotifier.untrackCloudInstance($this)
-      - $template: $.getAttr(template, $.instanceTemplate)
-      - $.environment.stack.excludeTemplate($template)
-      - $.environment.stack.push()
+      - $template: $.getAttr(template, null)
+      - If: $template != null
+        Then:
+          - $.environment.stack.excludeTemplate($template)
+      - $.environment.instanceNotifier.untrackCloudInstance($this)
 
   createDefaultInstanceSecurityGroupRules:
     Arguments:

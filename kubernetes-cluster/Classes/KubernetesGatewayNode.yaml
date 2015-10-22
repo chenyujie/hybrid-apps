@@ -34,6 +34,15 @@ Methods:
           - $.super($.deployInstance())
           - $.setAttr(instanceDeployed, true)
 
+
+  restart:
+    Body:
+      - $.instance.restart()
+      - If: $.instance.assignFloatingIp
+        Then:
+          - $._environment.reporter.report($, 'Gateway {0} available at {1}'.format($.instance.name, $.instance.floatingIpAddress))
+
+
   setupEtcd:
     Body:
       - If: not $.getAttr(etcdConfigured, false)
