@@ -1,0 +1,17 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.docker.kubernetes.TokyoKubernetesCluster
+Name: Tokyo Kubernetes Cluster
+Description: |
+ Tokyo Kubernetes is an open source system for managing containerized applications across multiple hosts,
+ providing basic mechanisms for deployment, maintenance, and scaling of applications.
+Author: 'HUAWEI'
+Tags: [Docker, TokyoKubernetes]
+Classes:
+ io.murano.apps.docker.kubernetes.TokyoKubernetesCluster: TokyoKubernetesCluster.yaml
+ io.murano.apps.docker.kubernetes.TokyoKubernetesMasterNode: TokyoKubernetesMasterNode.yaml
+ io.murano.apps.docker.kubernetes.TokyoKubernetesMinionNode: TokyoKubernetesMinionNode.yaml
+ io.murano.apps.docker.kubernetes.TokyoKubernetesGatewayNode: TokyoKubernetesGatewayNode.yaml
+ io.murano.apps.docker.kubernetes.TokyoKubernetesNode: TokyoKubernetesNode.yaml
+Require:
+    io.murano.apps.docker.Interfaces:
