@@ -109,6 +109,7 @@ Methods:
         Then:
           $.joinNet($.environment.defaultNetworks.flat, $securityGroupName)
       - $.networks.customNetworks.select($this.joinNet($, $securityGroupName))
+      - $.environment.reporter.report($this, '{0} network joined'.format($.name))
 
       - $preparedUserData: $.prepareUserData()
       - $userData: $preparedUserData.data
