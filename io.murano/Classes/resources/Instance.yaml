@@ -24,9 +24,6 @@ Properties:
   ipAddresses:
     Contract: [$.string()]
     Usage: Out
-  vmname:
-    Contract: $.string()
-    Usage: Out
   networks:
     Contract:
       useEnvironmentNetwork: $.bool().notNull()
@@ -88,7 +85,6 @@ Methods:
 
   deploy:
     Body:
-      - $.vmname: $.name
       - $.instanceTemplate: {}
       - $._floatingIpOutputName: null
 
@@ -116,7 +112,7 @@ Methods:
       - $userDataFormat: $preparedUserData.format
       - $template:
           resources:
-            $.vmname:
+            $.name:
               type: 'OS::Nova::Server'
               properties:
                 flavor: $.flavor
@@ -126,16 +122,17 @@ Methods:
                 user_data_format: $userDataFormat
                 key_name: $.keyname
           outputs:
-            format('{0}-assigned-ips', $.vmname):
-              description: format('Network IPs assigned to {0} instance', $.vmname)
+            format('{0}-assigned-ips', $.name):
+              description: format('Network IPs assigned to {0} instance', $.name)
               value:
-                get_attr: [ $.vmname, networks ]
+                get_attr: [ $.name, networks ]
 
       - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
 
       # Any additional template preparation
       - $.instanceTemplate: $.prepareStackTemplate($.instanceTemplate)
       - $.environment.stack.updateTemplate($.instanceTemplate)
+      #- $.environment.reporter.report($this, 'template is {0}'.format($.instanceTemplate))
       #- $.setAttr(template, $.instanceTemplate)
       - If: not $.lazy
         Then:
@@ -146,7 +143,7 @@ Methods:
     Body:
       - $outputs: $.environment.stack.output()
       # Changing this to use the .networks attribute instead of 'addresses'
-      - $.ipAddresses: $outputs.get(format('{0}-assigned-ips', $.vmname)).values().flatten()
+      - $.ipAddresses: $outputs.get(format('{0}-assigned-ips', $.name)).values().flatten()
       - If: $._floatingIpOutputName != null
         Then:
           - $.floatingIpAddress: $outputs.get($._floatingIpOutputName)
@@ -202,14 +199,13 @@ Methods:
           )
       - If: $joinResult.template != null
         Then:
-          - $.setAttr(template, $joinResult.template)
           - $.instanceTemplate: $.instanceTemplate.mergeWith($joinResult.template)
 
       - If: $joinResult.portRef != null
         Then:
           - $template:
               resources:
-                $.vmname:
+                $.name:
                   properties:
                     networks:
                       - port:
@@ -219,7 +215,7 @@ Methods:
         Then:
           - $template:
               resources:
-                $.vmname:
+                $.name:
                   properties:
                     security_groups:
                       - $joinResult.secGroupName
@@ -241,11 +237,11 @@ Methods:
     # when whole Environment is deleted (alongside with Heat stack deletion).
     # https://bugs.launchpad.net/murano/+bug/1359998
     Body:
-      - $template: $.getAttr(template, null)
-      - If: $template != null
-        Then:
-          - $.environment.stack.excludeTemplate($template)
       - $.environment.instanceNotifier.untrackCloudInstance($this)
+      #- $template: $.getAttr(template, null)
+      #- If: $template != null
+      #  Then:
+      #    - $.environment.stack.excludeTemplate($template)
 
   createDefaultInstanceSecurityGroupRules:
     Arguments:
