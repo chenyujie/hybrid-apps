@@ -60,7 +60,7 @@ Forms:
         - name: replicas
           type: integer
           label: Replicas (0 = disabled)
-          initial: 2
+          initial: 0
           minValue: 0
           description: >-
             Number of cluster Replicas. Setting to '0' prevents Replication Controller creation
