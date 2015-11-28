@@ -33,6 +33,13 @@ Methods:
           - $._environment.reporter.report($this, 'Creating Kubernetes Master')
           - $.super($.deployInstance())
           - $.setAttr(instanceDeployed, true)
+          - If: $.instance.assignFloatingIp
+            Then:
+              - $ip: coalesce($.instance.floatingIpAddress, $.getIp())
+              - $msg: 'cAdvisor monitoring for Node {0} is available at http://{1}:4194'
+              - $._environment.reporter.report($this, $msg.format($.instance.name, $ip))
+              - $msg: 'Kubernetes UI is available at https://{1}:6443'
+              - $._environment.reporter.report($this, $msg.format($ip))
 
 
   restart:
@@ -63,14 +70,19 @@ Methods:
         Then:
           - $resources: new(sys:Resources)
           - $._environment.reporter.report($this, 'Setup Flannel network on master node')
-          - $template: $resources.yaml('SetupFlannelMaster.template')
+          - $template: $resources.yaml('SetupFlannelNode.template').bind(dict(
+                masterIp => '127.0.0.1',
+                ip => $.getIp()
+              ))
           - $.instance.agent.call($template, $resources)
 
           - $._environment.reporter.report($this, 'Setup Kubernetes API host')
+          - $._cluster: $.find(KubernetesCluster).require()
           - $resources: new(sys:Resources)
           - $template: $resources.yaml('KubeMasterSetup.template').bind(dict(
                 name => $.instance.name,
-                ip => $.getIp()
+                ip => $.getIp(),
+                dockerRegistry => $._cluster.dockerRegistry
               ))
           - $.instance.agent.call($template, $resources)
           - $.setAttr(nodeConfigured, true)

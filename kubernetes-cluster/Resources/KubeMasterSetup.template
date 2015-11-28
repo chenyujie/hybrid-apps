@@ -17,9 +17,12 @@ Name: Setup Kubernetes Master
 Parameters:
   name: $name
   ip: $ip
+  dockerRegistry: $dockerRegistry
 
 Body: |
-  return setup('{0} {1}'.format(args.name, args.ip)).stdout
+  if args.dockerRegistry:
+    setupRegistry(args.dockerRegistry)
+  return setup('{0} {1} {2}'.format(args.name, args.ip, args.dockerRegistry)).stdout
 
 Scripts:
   setup:
@@ -36,7 +39,24 @@ Scripts:
       - default_scripts/kube-apiserver
       - default_scripts/kube-scheduler
       - default_scripts/kube-controller-manager
+      - default_scripts/kube-proxy
+      - default_scripts/kubelet
+      - init_conf/kubelet.conf
+      - init_conf/kube-proxy.conf
+      - initd_scripts/kubelet
+      - initd_scripts/kube-proxy
+      - default_scripts/kube-ui-rc.yaml
+      - default_scripts/kube-ui-svc.yaml
 
+    Options:
+      captureStdout: true
+      captureStderr: true
+
+  setupRegistry:
+    Type: Application
+    Version: 1.0.0
+    EntryPoint: setupDockerRegistry.sh
+    Files: []
     Options:
       captureStdout: true
       captureStderr: true

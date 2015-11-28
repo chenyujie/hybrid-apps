@@ -15,9 +15,11 @@ Version: 1.0.0
 Name: Setup Flannel
 
 Parameters:
+  masterIp: $masterIp
+  ip: $ip
 
 Body: |
-  setupFlannel()
+  setupFlannel('{0} {1}'.format(args.masterIp, args.ip))
 
 Scripts:
   setupFlannel:

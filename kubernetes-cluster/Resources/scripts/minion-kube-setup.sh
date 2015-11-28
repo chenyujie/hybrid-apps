@@ -3,6 +3,7 @@
 # $1 - NAME
 # $2 - IP
 # $3 - MASTER_IP
+# $4 - cAdvisor port
 
 mkdir /var/log/kubernetes
 mkdir -p /var/run/murano-kubernetes
@@ -25,3 +26,5 @@ service kubelet start
 service kube-proxy start
 
 sleep 1
+
+/opt/bin/etcdctl -C http://$3:4001 mk /registry/services/endpoints/mapping/$2:4194 "$4"

@@ -24,7 +24,6 @@ Methods:
   initialize:
     Body:
       - $._environment: $.find(std:Environment).require()
-      - $._cluster: $.find(KubernetesCluster).require()
 
   deployInstance:
     Body:
@@ -34,6 +33,9 @@ Methods:
           - $.super($.deployInstance())
           - $.setAttr(instanceDeployed, true)
 
+  getExtIp:
+    Body:
+      Return: coalesce($.instance.floatingIpAddress, $.getIp())
 
   restart:
     Body:
@@ -44,39 +46,25 @@ Methods:
 
 
   setupEtcd:
-    Body:
-      - If: not $.getAttr(etcdConfigured, false)
-        Then:
-          - $._environment.reporter.report($, 'Configuring etcd node {0}'.format($.instance.name))
-          - $resources: new(sys:Resources)
-          - $template: $resources.yaml('EtcdAddMember.template').bind(dict(
-                name => $.instance.name,
-                ip => $.getIp()
-              ))
-          - $clusterConfig: $._cluster.masterNode.instance.agent.call($template, $resources)
-
-          - $template: $resources.yaml('MemberEtcdSetup.template').bind(dict(
-                name => $.instance.name,
-                ip => $.getIp(),
-                clusterConfig => $clusterConfig
-              ))
-          - $.instance.agent.call($template, $resources)
-          - $.setAttr(etcdConfigured, true)
 
 
   setupNode:
     Body:
       - If: not $.getAttr(nodeConfigured, false)
         Then:
-          - $._environment.reporter.report($this, 'Setup Flannel network on {0}'.format($.instance.name))
+          - $._cluster: $.find(KubernetesCluster).require()
           - $resources: new(sys:Resources)
-          - $template: $resources.yaml('SetupFlannelNode.template')
+          - $template: $resources.yaml('SetupFlannelNode.template').bind(dict(
+                masterIp => $._cluster.masterNode.getIp(),
+                ip => $.getIp()
+              ))
           - $.instance.agent.call($template, $resources)
+          - $._environment.reporter.report($this, 'Setup Flannel network on {0}'.format($.instance.name))
 
-          - $._environment.reporter.report($, 'Setup Load Balancer on {0}'.format($.instance.name))
           - $template: $resources.yaml('HAProxySetup.template').bind(dict(
                 masterIp => $._cluster.masterNode.getIp()
               ))
           - $.instance.agent.call($template, $resources)
+          - $._environment.reporter.report($, 'Setup Load Balancer on {0}'.format($.instance.name))
           - $.setAttr(nodeConfigured, true)
 

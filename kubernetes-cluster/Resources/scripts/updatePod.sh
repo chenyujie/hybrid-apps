@@ -2,7 +2,7 @@
 
 #  File with pod is /tmp/pod.json
 # $1 new or update
-DEFINITION_DIR=/var/run/murano-kubernetes
+DEFINITION_DIR=/var/lib/murano-kubernetes
 mkdir -p $DEFINITION_DIR
 
 podId=$2

@@ -1,9 +1,13 @@
 #!/bin/bash
 
+touch /etc/default/etcd
+sed -i.bkp "s/%%MASTER_IP%%/$1/g" default_scripts/flanneld
+sed -i.bkp "s/%%IP%%/$2/g" default_scripts/flanneld
+
 cp init_conf/flanneld.conf /etc/init/
 chmod +x initd_scripts/flanneld
 cp initd_scripts/flanneld /etc/init.d/
-cp default_scripts/flanneld /etc/default/
+cp -f default_scripts/flanneld /etc/default/
 
 
 service flanneld start

@@ -32,10 +32,9 @@ Properties:
   minionNodes:
     Contract:
       - $.class(KubernetesMinionNode).notNull()
-      - 1
 
   nodeCount:
-    Contract: $.int().notNull().check($ > 0)
+    Contract: $.int().notNull()
     Usage: InOut
 
   availabilityZones:
@@ -52,6 +51,7 @@ Properties:
 
   dockerRegistry:
     Contract: $.string()
+    Usage: InOut
 
   serviceEndpoints:
     Contract:
@@ -115,11 +115,11 @@ Methods:
               - Do: $.gatewayNodes.take($.gatewayCount).pselect($.restart())
 
           - $.masterNode.setupEtcd()
-          - $.masterNode.setupNode()
-          - $.minionNodes.take($.nodeCount).select($.setupEtcd())
-          - $.gatewayNodes.take($.gatewayCount).select($.setupEtcd())
+          #- $.minionNodes.take($.nodeCount).select($.setupEtcd())
+          #- $.gatewayNodes.take($.gatewayCount).select($.setupEtcd())
 
           - Parallel:
+              - Do: $.masterNode.setupNode()
               - Do: $.minionNodes.take($.nodeCount).pselect($.setupNode())
               - Do: $.minionNodes.skip($.nodeCount).pselect($.removeFromCluster())
               - Do: $.gatewayNodes.take($.gatewayCount).pselect($.setupNode())
@@ -279,7 +279,7 @@ Methods:
 
     Body:
       - $serviceDefinition:
-          apiVersion: v1beta3
+          apiVersion: v1
           kind: Service
           metadata:
             labels:
@@ -297,7 +297,9 @@ Methods:
 
       - If: $.gatewayCount = 0
         Then:
-          - $serviceDefinition.spec.publicIPs: $.minionNodes.take($.nodeCount).select($.getIp())
+          - $nodes: $.minionNodes.take($.nodeCount)
+          #- $nodes: $nodes + list($.masterNode)
+          - $serviceDefinition.spec.publicIPs: $nodes.select($.getIp())
 
       - $resources: new(sys:Resources)
       - $template: $resources.yaml('UpdateService.template').bind(dict(
@@ -345,6 +347,7 @@ Methods:
                   - $nodes: $.gatewayNodes.take($.gatewayCount)
                 Else:
                   - $nodes: $.minionNodes.take($.nodeCount)
+                  #- $nodes: $nodes + list($.masterNode)
 
               - For: t
                 In: $nodes
@@ -393,7 +396,9 @@ Methods:
       - $uniqueServiceNames: $serviceNameMap.keys()
       - If: len($uniqueServiceNames) > 0
         Then:
-          - $publicIPs: $.minionNodes.take($.nodeCount).select($.getIp())
+          - $nodes: $.minionNodes.take($.nodeCount)
+          #- $nodes: $nodes + list($.masterNode)
+          - $publicIPs: $nodes.select($.getIp())
           - $resources: new(sys:Resources)
           - $template: $resources.yaml('PatchServices.template').bind(dict(
                 services => $uniqueServiceNames,
@@ -427,7 +432,7 @@ Methods:
       - protocol:
           Contract: $.string().notNull()
     Body:
-      - If: initial != 22 and $._checkIfPortIsNotUsed($initial, $protocol)
+      - If: $initial != 22 and $._checkIfPortIsNotUsed($initial, $protocol)
         Then:
           Return: $initial
 
@@ -449,7 +454,7 @@ Methods:
 
 
   scaleNodesUp:
-    Usage: Action
+    #Usage: Action
     Body:
       - If: $.nodeCount < len($.minionNodes)
         Then:
@@ -461,7 +466,7 @@ Methods:
 
 
   scaleNodesDown:
-    Usage: Action
+    #Usage: Action
     Body:
       - If: $.nodeCount > 1
         Then:
@@ -473,7 +478,7 @@ Methods:
 
 
   scaleGatewaysUp:
-    Usage: Action
+    #Usage: Action
     Body:
       - If: $.gatewayCount < len($.gatewayNodes)
         Then:

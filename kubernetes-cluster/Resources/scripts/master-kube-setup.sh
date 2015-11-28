@@ -17,7 +17,6 @@ mkdir /var/log/kubernetes
 mkdir -p /var/run/murano-kubernetes
 
 sed -i.bkp "s/%%MASTER_IP%%/$2/g" default_scripts/kube-scheduler
-sed -i.bkp "s/%%IP%%/$2/g" default_scripts/kube-scheduler
 
 cp -f default_scripts/kube-apiserver /etc/default/
 cp -f default_scripts/kube-scheduler /etc/default/
@@ -39,3 +38,11 @@ service kube-controller-manager start
 /opt/bin/kubectl delete node 127.0.0.1
 
 sleep 1
+
+# $3 - REGISTRY
+REGISTRY=$3
+if [ ${REGISTRY}y = y ]; then REGISTRY='gcr.io'; fi
+sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/kube-ui-rc.yaml
+/opt/bin/kubectl create -f default_scripts/kube-ui-rc.yaml
+/opt/bin/kubectl create -f default_scripts/kube-ui-svc.yaml
+/opt/bin/etcdctl -C mk /registry/services/endpoints/mapping/$2:8080 "8080"
