@@ -45,4 +45,4 @@ if [ ${REGISTRY}y = y ]; then REGISTRY='gcr.io'; fi
 sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/kube-ui-rc.yaml
 /opt/bin/kubectl create -f default_scripts/kube-ui-rc.yaml
 /opt/bin/kubectl create -f default_scripts/kube-ui-svc.yaml
-/opt/bin/etcdctl -C mk /registry/services/endpoints/mapping/$2:8080 "8080"
+/opt/bin/etcdctl mk /registry/services/endpoints/mapping/$2:8080 "8080"
