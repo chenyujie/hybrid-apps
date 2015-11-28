@@ -126,7 +126,7 @@ Methods:
           - $._updateServicePublicIps()
           - $.setAttr(lastNodeCount, $.nodeCount)
           - $.setAttr(lastGatewayCount, $.gatewayCount)
-          - $._environment.reporter.report($this, 'Kubernetes cluster is up and running')
+          - $._environment.reporter.report($this, format('Kubernetes cluster http://{0}:8080/ui is up and running', $.gatewayNodes[0].getExtIp()))
       - $.setAttr(serviceEndpoints, $.serviceEndpoints)
 
 

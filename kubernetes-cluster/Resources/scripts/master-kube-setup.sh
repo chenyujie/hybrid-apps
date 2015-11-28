@@ -35,9 +35,13 @@ service kube-apiserver start
 service kube-scheduler start
 service kube-controller-manager start
 
-/opt/bin/kubectl delete node 127.0.0.1
-
 sleep 1
+
+RETRY=5
+while [[ `ss -tln|grep 8080|wc -l` = 0 && $RETRY -gt 0 ]]; do
+  sleep 1
+  RETRY=`expr $RETRY - 1`
+done
 
 # $3 - REGISTRY
 REGISTRY=$3
@@ -46,3 +50,5 @@ sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/kube-ui-rc.yaml
 /opt/bin/kubectl create -f default_scripts/kube-ui-rc.yaml
 /opt/bin/kubectl create -f default_scripts/kube-ui-svc.yaml
 /opt/bin/etcdctl mk /registry/services/endpoints/mapping/$2:8080 "8080"
+
+/opt/bin/kubectl delete node 127.0.0.1

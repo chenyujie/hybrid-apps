@@ -146,6 +146,7 @@ Forms:
           label: Size of data volume 
           initial: 0
           minValue: 0
+          hidden: true
           required: false
           description: >-
             Select size of data volume
@@ -153,6 +154,7 @@ Forms:
           type: string
           label: Volume Type 
           initial: magnetic
+          hidden: true
           required: false
           description: >-
             Select volume type
