@@ -52,6 +52,12 @@ Properties:
   lazy:
     Contract: $.bool()
     Default: false
+  volume:
+    Contract: $.int()
+    Default: 0
+  volume_type:
+    Contract: $.string()
+    Default: null
 
 Methods:
   initialize:
@@ -128,6 +134,33 @@ Methods:
                 get_attr: [ $.name, networks ]
 
       - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
+
+      - If: $.volume > 0
+        Then:
+          - $vol_name: $.name + '_vol'
+          - $vol_attach: $.name + '_attach'
+          - $template:
+              resources:
+                $vol_name:
+                  type: 'OS::Cinder::Volume'
+                  properties:
+                    size: $.volume
+                    availability_zone: $.availabilityZone
+                $vol_attach:
+                  type: 'OS::Cinder::VolumeAttachment'
+                  properties:
+                    volume_id: { get_resource: $vol_name }
+                    instance_uuid: { get_resource: $.name }
+                    mountpoint: '/dev/vdb'
+          - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
+          - If: $.volume_type != null
+            Then:
+              - $template:
+                  resources:
+                    $vol_name:
+                      properties:
+                        volume_type: $.volume_type
+              - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
 
       # Any additional template preparation
       - $.instanceTemplate: $.prepareStackTemplate($.instanceTemplate)
