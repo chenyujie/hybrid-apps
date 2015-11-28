@@ -35,6 +35,7 @@ Properties:
 
   replicas:
     Contract: $.int().notNull().check($ >= 0)
+    Usage: InOut
 
 
 Methods:
