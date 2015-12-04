@@ -57,7 +57,7 @@ Methods:
         Contract: $.class(DockerMySQL).notNull()
     Body:
       - $result: {}
-      - $result['WORDPRESS_DB_HOST']: $mysql.applicationEndpoints.where($.scope = 'internal').select(format('{0}:{1}', $.address, $.port))[0]
+      - $result['WORDPRESS_DB_HOST']: $mysql.applicationEndpoints.where($.scope = 'cloud').select(format('{0}:{1}', $.address, $.port))[0]
       - $result['WORDPRESS_DB_USER']: root
       - $result['WORDPRESS_DB_PASSWORD']: $mysql.password
       - Return: $result

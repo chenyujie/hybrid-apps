@@ -129,7 +129,7 @@ Methods:
             volumes: $newVolumes
       - $._podDefinition: $._podDefinition.mergeWith($diff)
       - $.deploy()
-      - $._environment.reporter.report($, 'Creating services for Pod {0}'.format($.name))
+      - $._environment.reporter.report($, 'Creating services {0}'.format($container.name))
       - $.kubernetesCluster.createService(
             applicationName => $container.name,
             applicationPorts => $container.ports,
@@ -273,20 +273,26 @@ Methods:
           #    - $.kubernetesCluster.deletePods(dict(id => $._getPodName()))
           - If: $.replicas = 0 and len($podDefinition.spec.containers) > 0
             Then:
-              - $.kubernetesCluster.createPod(definition => $podDefinition, isNew => true)
+              - $.kubernetesCluster.createPod(definition => $podDefinition, isNew => false)
 
           - $._environment.reporter.report($, 'Pod {0} is ready'.format($.name))
           - $.setAttr(lastPodDeployed, $podDefinition)
 
   destroy:
     Body:
-      - $prevReplicas: $.getAttr(lastReplicas, 0)
-      - If: $prevReplicas > 0
-        Then:
-          - $.kubernetesCluster.deleteReplicationController($._getReplicationControllerId())
-        Else:
-          - $.kubernetesCluster.deletePods(dict(id => $._getPodName()))
-
+      - Try:
+        - $prevReplicas: $.getAttr(lastReplicas, 0)
+        - If: $prevReplicas > 0
+          Then:
+            - $.kubernetesCluster.deleteReplicationController($._getReplicationControllerId())
+          Else:
+            - $.kubernetesCluster.deletePods(dict(id => $._getPodName()))
+        Catch:
+        - As: e
+          Do:
+            - $formatString: 'Error: {0}'
+            - $._environment.reporter.report_error($, $formatString.format($e.message))
+            - Rethrow:
 
   _buildReplicationControllerDefinition:
     Arguments:

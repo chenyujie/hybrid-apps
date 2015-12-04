@@ -3,10 +3,10 @@
 # $1 - NAME
 # $2 - IP
 
-service kube-proxy stop
+#service kube-proxy stop
 service kube-scheduler stop
 service kube-controller-manager stop
-service kubelet stop
+#service kubelet stop
 service kube-apiserver stop
 
 #Disable controller-manager for now
@@ -51,4 +51,4 @@ sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/kube-ui-rc.yaml
 /opt/bin/kubectl create -f default_scripts/kube-ui-svc.yaml
 /opt/bin/etcdctl mk /registry/services/endpoints/mapping/$2:8080 "8080"
 
-/opt/bin/kubectl delete node 127.0.0.1
+#/opt/bin/kubectl delete node 127.0.0.1
