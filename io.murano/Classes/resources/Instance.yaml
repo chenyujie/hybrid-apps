@@ -58,6 +58,9 @@ Properties:
   volume_type:
     Contract: $.string()
     Default: null
+  network:
+    Contract: $.string()
+    Default: null
 
 Methods:
   initialize:
@@ -99,19 +102,62 @@ Methods:
             $.environment.securityGroupManager.defaultGroupName
           )
       - $.createDefaultInstanceSecurityGroupRules($securityGroupName)
-      - $.detectPrimaryNetwork()
-      - If: sharedIps != null
+
+      - If: $.network = null
         Then:
-          - $.ensureSharedIpsDeployed()
-      - $.ensureNetworksDeployed()
-      - If: $.networks.useEnvironmentNetwork and $.environment.defaultNetworks.environment!=null
-        Then:
-          $.joinNet($.environment.defaultNetworks.environment, $securityGroupName)
-      - If: $.networks.useFlatNetwork and $.environment.defaultNetworks.flat!=null
-        Then:
-          $.joinNet($.environment.defaultNetworks.flat, $securityGroupName)
-      - $.networks.customNetworks.select($this.joinNet($, $securityGroupName))
-      - $.environment.reporter.report($this, '{0} network joined'.format($.name))
+          - $.detectPrimaryNetwork()
+          - If: sharedIps != null
+            Then:
+              - $.ensureSharedIpsDeployed()
+          - $.ensureNetworksDeployed()
+          - If: $.networks.useEnvironmentNetwork and $.environment.defaultNetworks.environment!=null
+            Then:
+              $.joinNet($.environment.defaultNetworks.environment, $securityGroupName)
+          - If: $.networks.useFlatNetwork and $.environment.defaultNetworks.flat!=null
+            Then:
+              $.joinNet($.environment.defaultNetworks.flat, $securityGroupName)
+          - $.networks.customNetworks.select($this.joinNet($, $securityGroupName))
+        Else:
+          - $portName: format('port-{0}-{1}', $.id(), $.name)
+          - $template:
+              resources:
+                $portName:
+                  type: 'OS::Neutron::Port'
+                  properties:
+                    network: $.network
+                    replacement_policy: AUTO
+                $.name:
+                  properties:
+                    networks:
+                    - port: {get_resource: $portName}
+          - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
+          - If: $securityGroupName != null
+            Then:
+              - $template:
+                  resources:
+                    $portName:
+                      properties:
+                        security_groups:
+                        - {get_resource: $securityGroupName}
+              - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
+          - If: $.assignFloatingIp
+            Then:
+              - $_netExplorer: new(sys:NetworkExplorer)
+              - $ext_net: $_netExplorer.getExternalNetworkIdForNetwork($.network)
+              - $fip_name: format('fip-{0}-{1}', $.id(), $.name)
+              - $._floatingIpOutputName: $.name + '-floatingIPaddress'
+              - $template:
+                  resources:
+                    $fip_name:
+                      type: 'OS::Neutron::FloatingIP'
+                      properties:
+                        floating_network_id: $ext_net
+                        port_id: {get_resource: $portName}
+                  outputs:
+                    $._floatingIpOutputName:
+                      value:
+                        get_attr: [$fip_name, floating_ip_address]
+              - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
 
       - $preparedUserData: $.prepareUserData()
       - $userData: $preparedUserData.data
@@ -132,7 +178,6 @@ Methods:
               description: format('Network IPs assigned to {0} instance', $.name)
               value:
                 get_attr: [ $.name, networks ]
-
       - $.instanceTemplate: $.instanceTemplate.mergeWith($template)
 
       - If: $.volume > 0

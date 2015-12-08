@@ -18,12 +18,13 @@ Templates:
     instance:
       ?:
         type: io.murano.resources.LinuxMuranoInstance
-      name: generateHostname($.masterConfig.unitNamingPattern, 1)
+      name: generateHostname($.minionConfig.unitNamingPattern, 1)
       flavor: $.masterConfig.flavor
       image: 'ubuntu14.04-x64-kubernetes'
-      assignFloatingIp: $.masterConfig.assignFloatingIPMaster
+      assignFloatingIp: $.minionConfig.assignFloatingIPMaster
       keyname: $.masterConfig.keyPair
-      availabilityZone: $.masterConfig.availabilityZoneMaster
+      availabilityZone: $.minionConfig.availabilityZoneMaster
+      network: $.masterConfig.network
       lazy: true
 
   minionNode:
@@ -32,7 +33,7 @@ Templates:
     instance:
       ?:
         type: io.murano.resources.LinuxMuranoInstance
-      name: generateHostname($.masterConfig.unitNamingPattern, $index + 1)
+      name: generateHostname($.minionConfig.unitNamingPattern, $index + 1)
       flavor: $.masterConfig.flavor
       image: 'ubuntu14.04-x64-kubernetes'
       assignFloatingIp: $.minionConfig.assignFloatingIP
@@ -40,6 +41,7 @@ Templates:
       lazy: true
       volume: $.minionConfig.volume
       volume_type: $.minionConfig.volume_type
+      network: $.masterConfig.network
     cAdvisorPort: $index + 4193
 
   gatewayNode:
@@ -54,6 +56,7 @@ Templates:
       assignFloatingIp: $.gatewayConfig.assignGatewayFloatingIP
       keyname: $.masterConfig.keyPair
       availabilityZone: $.gatewayConfig.availabilityZone
+      network: $.masterConfig.network
       lazy: true
 
 Application:
@@ -66,7 +69,7 @@ Application:
   availabilityZones: $.minionConfig.availabilityZones
   gatewayCount: $.gatewayConfig.gatewayCount
   gatewayNodes: repeat($gatewayNode, $.gatewayConfig.gatewayCount)
-  dockerRegistry: $.gatewayConfig.dockerRegistry
+  dockerRegistry: $.masterConfig.dockerRegistry
 
 Forms:
   - masterConfig:
@@ -97,6 +100,22 @@ Forms:
             Select the Key Pair to control access to instances. You can login to
             instances using this KeyPair after the deployment.
           required: false
+        - name: network
+          type: network
+          label: Network
+          description: >-
+            Select the network where to place the instances.
+          required: true
+        - name: dockerRegistry
+          type: string
+          initial: 202.96.135.237:5000
+          label: Custom Docker registry URL
+          description: >-
+            URL of docker repository mirror to use.
+            Leave empty to use Docker default.
+          required: false
+  - minionConfig:
+      fields:
         - name: unitNamingPattern
           type: string
           initial: kube-#
@@ -122,8 +141,6 @@ Forms:
           label: Availability Zone of Master node
           description: Select an availability zone where the master node should be installed.
           required: true
-  - minionConfig:
-      fields:
         - name: minionCount
           type: integer
           label: Initial number of minions
@@ -216,11 +233,3 @@ Forms:
           label: Availability Zone of Gateway nodes
           description: Select an availability zone where the gateway node should be installed.
           required: true
-        - name: dockerRegistry
-          type: string
-          initial: 202.96.135.237:5000
-          label: Custom Docker registry URL
-          description: >-
-            URL of docker repository mirror to use.
-            Leave empty to use Docker default.
-          required: false
