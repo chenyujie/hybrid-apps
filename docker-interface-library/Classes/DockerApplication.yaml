@@ -33,6 +33,10 @@ Properties:
     Usage: Out
 
 Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+
   deploy:
     Body:
       #- $.host.deploy()
@@ -41,7 +45,6 @@ Methods:
       - If: $.getAttr(container, null) != $repr
         Then:
         - $.onInstallationStart()
-        - $._environment: $.find(std:Environment).require()
         - Try:
           - $.applicationEndpoints: $.host.hostContainer($container)
           - $.setAttr(container, $repr)
