@@ -268,12 +268,12 @@ Methods:
           - If: $replicas = 0 and $prevReplicas > 0
             Then:
               - $.kubernetesCluster.deleteReplicationController($._getReplicationControllerId())
-          #- If: $prevPod != $podDefinition and len($prevPod.spec.containers) > 0
-          #  Then:
-          #    - $.kubernetesCluster.deletePods(dict(id => $._getPodName()))
+          - If: $prevPod != $podDefinition and len($prevPod.spec.containers) > 0
+            Then:
+              - $.kubernetesCluster.deletePods(dict(id => $._getPodName()))
           - If: $.replicas = 0 and len($podDefinition.spec.containers) > 0
             Then:
-              - $.kubernetesCluster.createPod(definition => $podDefinition, isNew => false)
+              - $.kubernetesCluster.createPod(definition => $podDefinition, isNew => true)
 
           - $._environment.reporter.report($, 'Pod {0} is ready'.format($.name))
           - $.setAttr(lastPodDeployed, $podDefinition)
