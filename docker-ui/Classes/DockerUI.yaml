@@ -16,14 +16,11 @@ Namespaces:
 
 Name: DockerUI
 
-Extends: std:Application
+Extends: DockerApplication
 
 Properties:
   name:
     Contract: $.string().notNull()
-
-  host:
-    Contract: $.class(DockerContainerHost).notNull()
 
   publish:
     Contract: $.bool().notNull()
@@ -36,31 +33,29 @@ Methods:
       - $._environment: $.find(std:Environment).require()
       - $._scope: switch($.publish, $ => public, not $ => internal)
 
-  deploy:
+
+  getContainer:
     Body:
-      - If: not $.getAttr(deployed, false)
-        Then:
-          - $._environment.reporter.report($this, 'Installing DockerUI')
+      - Return:
+          name: $.name
+          image: 'dockerui/dockerui'
+          ports:
+            - port: 9000
+              scope: $._scope
+          volumes:
+            '/var/run/docker.sock': new(DockerHostVolume, path => '/var/run/docker.sock')
 
-          - $volumes:
-              '/var/run/docker.sock': new(DockerHostVolume, name => 'varrun', path => '/var/run/docker.sock') 
 
-          - $.host.hostContainer(
-                name => $.name,
-                image => 'dockerui/dockerui',
-                commands => list(),
-                env => dict(),
-                ports => list(9000),
-                volumes => $volumes
-              )
-          - $.host.deploy()
-          
-          - $._environment.reporter.report($this, 'Docker UI is ready')
-          - $.setAttr(deployed, true)
+  onInstallationStart:
+    Body:
+      - $._environment.reporter.report($this, 'Installing DockerUI')
 
+
+  onInstallationFinish:
+    Body:
       - If: $.publish
         Then:
           - $endpoints: $.applicationEndpoints.where($.scope = $this._scope).select(format('http://{0}:{1}', $.address, $.port))
-          - $._environment.reporter.report($this, 'DockerUI {0} is available at {1}'.format($.name, join(', ', $endpoints)))
+          - $._environment.reporter.report($this, 'HTTPd {0} is available at {1}'.format($.name, join(', ', $endpoints)))
         Else:
-          - $._environment.reporter.report($this, 'DockerUI {0} has deployed but is not accessible from outside'.format($.name))
+          - $._environment.reporter.report($this, 'HTTPd {0} has deployed but is not accessible from outside'.format($.name))

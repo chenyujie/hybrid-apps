@@ -24,4 +24,3 @@ Classes:
  io.murano.apps.docker.DockerUI: DockerUI.yaml
 Require:
     io.murano.apps.docker.kubernetes.KubernetesPod:
-    io.murano.apps.docker.DockerHost:

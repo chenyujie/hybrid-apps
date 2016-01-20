@@ -38,7 +38,6 @@ Forms:
         - name: host
           type:
             - io.murano.apps.docker.kubernetes.KubernetesPod
-            - io.murano.apps.docker.DockerHost
           label: Container Host
           description: >-
             Select an instance of Docker contaniner hosting provider to run the app
