@@ -21,6 +21,9 @@ Parameters:
 Body: |
   import json
   import uuid
+  import os
+  if not os.path.exists('/var/run/murano-kubernetes/'):
+  	os.makedirs('/var/run/murano-kubernetes/')
   fileName = '/var/run/murano-kubernetes/' + str(uuid.uuid4()) + '.json'
   with open(fileName, 'w') as f:
     json.dump(args.serviceDefinition, f)

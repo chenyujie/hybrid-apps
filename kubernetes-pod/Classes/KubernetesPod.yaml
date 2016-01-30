@@ -25,6 +25,10 @@ Extends:
 Properties:
   name:
     Contract: $.string().notNull()
+    
+  availabilityZone:
+    Contract: $.string()
+    Usage: InOut
 
   kubernetesCluster:
     Contract: $.class(KubernetesCluster).notNull()
@@ -68,6 +72,8 @@ Methods:
                   spec:
                     containers: []
                     volumes: []
+                    nodeSelector:
+                      az: toLower($.availabilityZone)
 
               - $.setAttr(lastPodDeployed, $podDefinition)
           - $._podDefinition: $podDefinition

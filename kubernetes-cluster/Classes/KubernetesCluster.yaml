@@ -127,6 +127,7 @@ Methods:
           - $.setAttr(lastNodeCount, $.nodeCount)
           - $.setAttr(lastGatewayCount, $.gatewayCount)
           - $._environment.reporter.report($this, format('Kubernetes cluster http://{0}:8080/ui is up and running', $.gatewayNodes[0].getExtIp()))
+          - $.minionNodes.take($.nodeCount).pselect($.setupLabel())
       - $.setAttr(serviceEndpoints, $.serviceEndpoints)
 
 

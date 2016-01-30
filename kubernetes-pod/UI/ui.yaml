@@ -17,6 +17,7 @@ Application:
     type: io.murano.apps.docker.kubernetes.KubernetesPod
   name: $.appConfiguration.name
   labels: $.appConfiguration.labels
+  availabilityZone: $.appConfiguration.availabilityZone
   kubernetesCluster: $.appConfiguration.kubernetesCluster
   replicas: $.appConfiguration.replicas
 
@@ -52,6 +53,11 @@ Forms:
             The prefix and slash are optional. If specified, the prefix must be a DNS subdomain.
             Valid label values must be shorter than 64 characters, accepted characters are ([-A-Za-z0-9_.])
             but the first character must be ([A-Za-z0-9]).
+        - name: availabilityZone
+          type: azone
+          label: Availability Zone of Pod
+          description: Select an availability zone.
+          required: true
         - name: kubernetesCluster
           type: io.murano.apps.docker.kubernetes.KubernetesCluster
           label: Kubernetes cluster

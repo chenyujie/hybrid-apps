@@ -77,6 +77,18 @@ Methods:
           - $._environment.reporter.report($this, $msg.format($.instance.name, $._cluster.gatewayNodes[0].getExtIp(), $.cAdvisorPort))
 
 
+  setupLabel:
+    Body:
+      - $._environment.reporter.report($, 'Setup label on {0}'.format($.instance.name))
+      - $resources: new(sys:Resources)
+      - $template: $resources.yaml('SetupMinionLabel.template').bind(dict(
+            name => $.getIp(),
+            masterIp => $._cluster.masterNode.getIp(),
+            availabilityZone => toLower($.instance.availabilityZone)
+          ))
+      - $.instance.agent.call($template, $resources)
+
+
   removeFromCluster:
     Body:
       - If: $.getAttr(nodeConfigured, false)

@@ -12,29 +12,23 @@
 
 FormatVersion: 2.0.0
 Version: 1.0.0
-Name: Update Pod
+Name: setupMinionLabel
 
 Parameters:
-  podDefinition: $podDefinition
-  isNew: $isNew
+  name: $name
+  masterIp: $masterIp
+  availabilityZone: $availabilityZone
 
 Body: |
   import json
   import uuid
-  import os
-  if not os.path.exists('/var/run/murano-kubernetes/'):
-  	os.makedirs('/var/run/murano-kubernetes/')
-  fileName = '/var/run/murano-kubernetes/' + str(uuid.uuid4()) + '.json'
-  with open(fileName, 'w') as f:
-    json.dump(args.podDefinition, f)
-
-  return updatePod('{0} {1} {2}'.format(args.isNew, args.podDefinition['metadata']['name'], fileName)).stdout
+  setupLabel('{0} {1} {2}'.format(args.name, args.masterIp, args.availabilityZone))
 
 Scripts:
-  updatePod:
+  setupLabel:
     Type: Application
     Version: 1.0.0
-    EntryPoint: updatePod.sh
+    EntryPoint: setupMinionLabel.sh
     Files: []
     Options:
       captureStdout: true
