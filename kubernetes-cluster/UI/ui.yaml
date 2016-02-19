@@ -64,7 +64,7 @@ Application:
     type: io.murano.apps.docker.kubernetes.KubernetesCluster
   name: $.masterConfig.name
   masterNode: $masterNode
-  minionNodes: repeat($minionNode, $.minionConfig.minionCount)
+  minionNodes: repeat($minionNode, $.minionConfig.maxMinionCount) #minionNodes: repeat($minionNode, $.minionConfig.minionCount)
   nodeCount: $.minionConfig.minionCount
   availabilityZones: $.minionConfig.availabilityZones
   gatewayCount: $.gatewayConfig.gatewayCount
@@ -153,8 +153,8 @@ Forms:
           type: integer
           label: Maximum number of minions
           initial: 3
-          required: flase
-          hidden: true
+          required: false
+          #hidden: true
           minValue: 0
           description: >-
             Select maximum number of minions

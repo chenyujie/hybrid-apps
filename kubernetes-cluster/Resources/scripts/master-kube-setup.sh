@@ -3,6 +3,16 @@
 # $1 - NAME
 # $2 - IP
 
+#add key generate in etcd setup
+hostname=`hostname`
+openssl genrsa -out ca.key 2048
+openssl req -x509 -new -nodes -key ca.key -subj "/CN=$hostname" -days 5000 -out ca.crt
+openssl genrsa -out server.key 2048
+openssl req -new -key server.key -subj "/CN=$hostname" -out server.csr
+openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 5000
+mkdir -p /var/run/kubernetes/
+cp ca.crt ca.key ca.srl server.crt server.csr server.key /var/run/kubernetes/
+
 #service kube-proxy stop
 service kube-scheduler stop
 service kube-controller-manager stop
@@ -52,3 +62,47 @@ sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/kube-ui-rc.yaml
 /opt/bin/etcdctl mk /registry/services/endpoints/mapping/$2:8080 "8080"
 
 #/opt/bin/kubectl delete node 127.0.0.1
+
+#run heapster service together with influxdb and grafana
+sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/influxdb-grafana-controller.yaml
+/opt/bin/kubectl create -f default_scripts/kube-account.yaml
+/opt/bin/kubectl create -f default_scripts/grafana-service.yaml
+/opt/bin/kubectl create -f default_scripts/influxdb-service.yaml
+/opt/bin/kubectl create -f default_scripts/influxdb-grafana-controller.yaml
+
+for((i=0;i<150;i++)) ; do
+    influxdb_ip=`/opt/bin/kubectl get pod --namespace=kube-system | grep 'influxdb-grafana-' | awk 'name=$1{system("/opt/bin/kubectl get pod/" name " --namespace=kube-system --template {{.status.podIP}}")}'`
+    if [[ $influxdb_ip != "<no value>" ]]
+    then
+        break 
+    fi
+    #echo $influxdb_ip
+    sleep 2
+done
+sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/heapster-controller.yaml
+sed -i.bkp "s/##HOST_IP##/$2/g" default_scripts/heapster-controller.yaml
+sed -i.bkp "s/##INFLUXDB_IP##/$influxdb_ip/g" default_scripts/heapster-controller.yaml
+/opt/bin/kubectl create -f default_scripts/heapster-service.yaml
+/opt/bin/kubectl create -f default_scripts/heapster-controller.yaml
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

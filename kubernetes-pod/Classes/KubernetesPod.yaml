@@ -41,6 +41,17 @@ Properties:
     Contract: $.int().notNull().check($ >= 0)
     Usage: InOut
 
+  maxreplicas:
+    Contract: $.int().notNull().check($ >= 0)
+    Usage: InOut
+    
+  cpuPercent:
+    Contract: $.int().notNull().check($ >= 0)
+    Usage: InOut
+    
+  autoscale:
+    Contract: $.bool()
+    Usage: InOut
 
 Methods:
   initialize:
@@ -72,9 +83,16 @@ Methods:
                   spec:
                     containers: []
                     volumes: []
-                    nodeSelector:
-                      az: toLower($.availabilityZone)
-
+#                    nodeSelector:
+#                      az: toLower($.availabilityZone)
+              - If: $.availabilityZone != 'Select Availability Zone'
+                Then:
+#                  - $._environment.reporter.report($, 'autoscaler = {0}'.format($.availabilityZone))
+                  - $diff:
+                      spec:
+                        nodeSelector:
+                          az: toLower($.availabilityZone)
+                  - $podDefinition: $podDefinition.mergeWith($diff)
               - $.setAttr(lastPodDeployed, $podDefinition)
           - $._podDefinition: $podDefinition
       - Return: $._podDefinition
@@ -125,6 +143,7 @@ Methods:
               mountPath => $
             ))
           env: $container.env.keys().select(dict(name => $, value => $container.env.get($)))
+          resources: {'limits': {'cpu': 500m}}
 
       - $newVolumes: $container.volumes.values().select(
           $this._buildVolumeEntry($container.name, $))
@@ -174,19 +193,28 @@ Methods:
       - $type: $volume.getType()
       - Value: $type
         Match:
-          HostDir:
-            - $spec:
-                hostDir:
+          HostPath:
+            - Return:
+                name: $._generateVolumeName($name, $volume)
+                hostPath:
                   path: $volume.getParameters()
+          Cinder:
+            - Return:
+                name: $._generateVolumeName($name, $volume)
+                cinder:
+                  volumeID: $volume.getParameters()
+                  fsType: ext4
           TempVolume:
-            - $spec:
+            - Return:
                 emptyDir: {}
+          Flocker:
+            - Return:
+                name: $._generateVolumeName($name, $volume)
+                flocker:
+                  datasetName: $volume.getParameters()
         Default:
           - Throw: UnknownDockerVolumeType
             Message: format('Unknown docker volume type {0}', $type)
-      - Return:
-          name: $._generateVolumeName($name, $volume)
-          source: $spec
 
 
   _deleteContainer:
@@ -230,7 +258,7 @@ Methods:
       - $.kubernetesCluster.deleteServices(
             applicationName => $name,
             podId => $._getPodName())
-      - $.deploy()
+      #- $.deploy()
 
 
   _generateVolumeName:
@@ -271,6 +299,11 @@ Methods:
               - $rcDefinition: $._buildReplicationControllerDefinition($podDefinition)
               - $.kubernetesCluster.createReplicationController(
                     definition => $rcDefinition, isNew => $prevReplicas = 0)
+              - If: $.autoscale
+                Then:
+                - $._environment.reporter.report($, 'Create horizontal pod autoscaler for Pod {0}'.format($.name))
+                - $.kubernetesCluster.createPodAutoScaler(
+                      minreplicas => $.replicas, maxreplicas => $.maxreplicas, cpuPercent => $.cpuPercent, podName => $.name)
           - If: $replicas = 0 and $prevReplicas > 0
             Then:
               - $.kubernetesCluster.deleteReplicationController($._getReplicationControllerId())

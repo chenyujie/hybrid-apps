@@ -19,7 +19,10 @@ Application:
   labels: $.appConfiguration.labels
   availabilityZone: $.appConfiguration.availabilityZone
   kubernetesCluster: $.appConfiguration.kubernetesCluster
-  replicas: $.appConfiguration.replicas
+  replicas: $.replicationConfigure.minReplicasCount
+  maxreplicas: $.replicationConfigure.maxReplicasCount
+  cpuPercent: $.replicationConfigure.cpuPercent
+  autoscale: $.replicationConfigure.autoscale
 
 
 Forms:
@@ -54,19 +57,45 @@ Forms:
             Valid label values must be shorter than 64 characters, accepted characters are ([-A-Za-z0-9_.])
             but the first character must be ([A-Za-z0-9]).
         - name: availabilityZone
-          type: azone
+          type: podazone
           label: Availability Zone of Pod
           description: Select an availability zone.
-          required: true
+          required: false
         - name: kubernetesCluster
           type: io.murano.apps.docker.kubernetes.KubernetesCluster
           label: Kubernetes cluster
           description: >-
             Kubernetes service
-        - name: replicas
+            
+  - replicationConfigure:
+      fields:
+        - name: minReplicasCount
           type: integer
-          label: Replicas (0 = disabled)
+          label: min number of Replicas
           initial: 0
           minValue: 0
           description: >-
-            Number of cluster Replicas. Setting to '0' prevents Replication Controller creation
+            Number of cluster Replicas. Setting to '0' prevents Replication Controller creation and autoscale
+        - name: maxReplicasCount
+          type: integer
+          label: max number of Replicas
+          initial: 0
+          minValue: 0
+          required: false
+          description: >-
+            max number of Replicas when set autoscale
+        - name: cpuPercent
+          type: integer
+          label: threshold of scale
+          initial: 50
+          minValue: 0
+          maxValue: 100
+          required: false
+          description: >-
+            CPU utilization for the pods it targets
+        - name: autoscale
+          type: boolean
+          label: set autoscale
+          initial: false
+          description: >-
+            set autoscale strategy, default:false    

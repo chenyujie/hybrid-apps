@@ -164,6 +164,28 @@ Methods:
       - $.masterNode.instance.agent.call($template, $resources)
 
 
+  createPodAutoScaler:
+    Arguments:
+      - minreplicas:
+          Contract: $.int().notNull()
+      - maxreplicas:
+          Contract: $.int().notNull()    
+      - cpuPercent:
+          Contract: $.int().notNull()
+      - podName:
+          Contract: $.string().notNull() 
+    Body:
+      #- $.deploy()
+      - $resources: new(sys:Resources)
+      - $template: $resources.yaml('CreateAutoScaler.template').bind(dict(
+            minreplicas => $minreplicas,
+            maxreplicas => $maxreplicas,
+            cpuPercent => $cpuPercent,
+            podName => $podName
+          ))
+      - $.masterNode.instance.agent.call($template, $resources)
+
+
   createReplicationController:
     Arguments:
       - definition:
@@ -417,7 +439,7 @@ Methods:
     Body:
       - $.serviceEndpoints: $.getAttr(serviceEndpoints, list())
       - $resources: new(sys:Resources)
-      - $services: $.serviceEndpoints.where($.scope = internal and $.podId = $podId).select($.serviceName)
+      - $services: $.serviceEndpoints.where($.scope = internal and $.podId = $podId and $.applicationName = $applicationName).select($.serviceName)
       - $template: $resources.yaml('DeleteServices.template').bind(dict(
             services => $services
           ))
@@ -455,7 +477,7 @@ Methods:
 
 
   scaleNodesUp:
-    #Usage: Action
+    Usage: Action
     Body:
       - If: $.nodeCount < len($.minionNodes)
         Then:

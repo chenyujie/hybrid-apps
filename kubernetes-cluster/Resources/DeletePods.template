@@ -19,7 +19,8 @@ Parameters:
 
 Body: |
   labels_str = ','.join(map(lambda t: '='.join(t), args.labels.items()))
-  deletePods(labels_str)
+  #deletePods(labels_str)
+  deletePods(args.labels.values()[0])
 
 Scripts:
   deletePods:
