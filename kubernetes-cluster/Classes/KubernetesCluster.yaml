@@ -119,7 +119,7 @@ Methods:
           #- $.gatewayNodes.take($.gatewayCount).select($.setupEtcd())
 
           - Parallel:
-              - Do: $.masterNode.setupNode()
+              - Do: $.masterNode.setupNode($.gatewayNodes[0].getIp())
               - Do: $.minionNodes.take($.nodeCount).pselect($.setupNode())
               - Do: $.minionNodes.skip($.nodeCount).pselect($.removeFromCluster())
               - Do: $.gatewayNodes.take($.gatewayCount).pselect($.setupNode())
@@ -285,6 +285,7 @@ Methods:
                 serviceIp => $serviceIp
               )
       - $.setAttr(serviceEndpoints, $.serviceEndpoints)
+      - Return: $.serviceEndpoints
 
 
   _createOrUpdateService:

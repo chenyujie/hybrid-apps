@@ -8,6 +8,16 @@
 mkdir /var/log/kubernetes
 mkdir -p /var/run/murano-kubernetes
 
+cp cloud_conf/cloud.conf /root/
+echo '58.60.106.60   identity.cloud.hybrid.huawei.com' >> /etc/hosts
+echo '58.60.106.60   compute.cloud.hybrid.huawei.com' >> /etc/hosts
+echo '58.60.106.60   volume.cloud.hybrid.huawei.com' >> /etc/hosts
+
+SERVERID=`hostname | cut -c7-42`
+echo $SERVERID > /etc/hostname
+hostname $SERVERID
+#source /etc/hostname
+
 sed -i.bkp "s/%%MASTER_IP%%/$3/g" default_scripts/kube-proxy
 sed -i.bkp "s/%%MASTER_IP%%/$3/g" default_scripts/kubelet
 sed -i.bkp "s/%%IP%%/$2/g" default_scripts/kubelet

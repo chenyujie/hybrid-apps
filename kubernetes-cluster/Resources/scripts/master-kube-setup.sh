@@ -47,7 +47,7 @@ service kube-controller-manager start
 
 sleep 1
 
-RETRY=5
+RETRY=30
 while [[ `ss -tln|grep 8080|wc -l` = 0 && $RETRY -gt 0 ]]; do
   sleep 1
   RETRY=`expr $RETRY - 1`
@@ -59,6 +59,7 @@ if [ ${REGISTRY}y = y ]; then REGISTRY='gcr.io'; fi
 sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/kube-ui-rc.yaml
 /opt/bin/kubectl create -f default_scripts/kube-ui-rc.yaml
 /opt/bin/kubectl create -f default_scripts/kube-ui-svc.yaml
+/opt/bin/etcdctl mk /registry/services/endpoints/mapping/$2:8080 "8080"
 
 #/opt/bin/kubectl delete node 127.0.0.1
 
@@ -69,39 +70,11 @@ sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/influxdb-grafana-
 /opt/bin/kubectl create -f default_scripts/influxdb-service.yaml
 /opt/bin/kubectl create -f default_scripts/influxdb-grafana-controller.yaml
 
-for((i=0;i<150;i++)) ; do
-    influxdb_ip=`/opt/bin/kubectl get pod --namespace=kube-system | grep 'influxdb-grafana-' | awk 'name=$1{system("/opt/bin/kubectl get pod/" name " --namespace=kube-system --template {{.status.podIP}}")}'`
-    if [[ $influxdb_ip != "<no value>" ]]
-    then
-        break 
-    fi
-    #echo $influxdb_ip
-    sleep 2
-done
+# $4 - gatewayIP
+#bash default_scripts/heapster_waiting.sh $1 $2 $3 &
+/opt/bin/etcdctl mk /registry/services/endpoints/mapping/$2:8086 "8086"
 sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/heapster-controller.yaml
 sed -i.bkp "s/##HOST_IP##/$2/g" default_scripts/heapster-controller.yaml
-sed -i.bkp "s/##INFLUXDB_IP##/$influxdb_ip/g" default_scripts/heapster-controller.yaml
+sed -i.bkp "s/##INFLUXDB_IP##/$4/g" default_scripts/heapster-controller.yaml
 /opt/bin/kubectl create -f default_scripts/heapster-service.yaml
 /opt/bin/kubectl create -f default_scripts/heapster-controller.yaml
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
