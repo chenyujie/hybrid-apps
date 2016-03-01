@@ -65,6 +65,9 @@ Methods:
 
 
   setupNode:
+    Arguments:
+      - gatewayIP:
+          Contract: $.string().notNull()
     Body:
       - If: not $.getAttr(nodeConfigured, false)
         Then:
@@ -82,7 +85,8 @@ Methods:
           - $template: $resources.yaml('KubeMasterSetup.template').bind(dict(
                 name => $.instance.name,
                 ip => $.getIp(),
-                dockerRegistry => $._cluster.dockerRegistry
+                dockerRegistry => $._cluster.dockerRegistry,
+                gatewayIP => $gatewayIP
               ))
           - $.instance.agent.call($template, $resources)
           - $.setAttr(nodeConfigured, true)

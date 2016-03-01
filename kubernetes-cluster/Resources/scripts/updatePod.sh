@@ -7,7 +7,17 @@ mkdir -p $DEFINITION_DIR
 
 podId=$2
 fileName=$3
+az=$4
+
 echo "$podId Pod $fileName" >> $DEFINITION_DIR/elements.list
+
+if [ $az != "NULL" ]; then
+    node=`/opt/bin/kubectl get nodes | grep $az | awk '{print $1}'`
+    if [ -z $node ]; then
+        echo "AZ ${az} could not be found" 
+        exit 1
+    fi
+fi
 
 if [ "$1" == "True" ]; then
   #new Pod

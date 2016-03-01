@@ -38,6 +38,7 @@ Scripts:
       - init_conf/kube-proxy.conf
       - initd_scripts/kubelet
       - initd_scripts/kube-proxy
+      - cloud_conf/cloud.conf
 
     Options:
       captureStdout: true

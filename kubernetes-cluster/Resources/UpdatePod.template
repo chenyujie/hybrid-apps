@@ -27,8 +27,12 @@ Body: |
   fileName = '/var/run/murano-kubernetes/' + str(uuid.uuid4()) + '.json'
   with open(fileName, 'w') as f:
     json.dump(args.podDefinition, f)
-
-  return updatePod('{0} {1} {2}'.format(args.isNew, args.podDefinition['metadata']['name'], fileName)).stdout
+  
+  az="NULL"
+  if 'nodeSelector' in args.podDefinition['spec']:
+  	az=args.podDefinition['spec']['nodeSelector']['az']
+  
+  return updatePod('{0} {1} {2} {3}'.format(args.isNew, args.podDefinition['metadata']['name'], fileName, az)).stdout
 
 Scripts:
   updatePod:

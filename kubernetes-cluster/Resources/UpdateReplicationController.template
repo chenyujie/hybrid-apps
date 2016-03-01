@@ -22,7 +22,12 @@ Body: |
   import json
   with open('/tmp/controller.json', 'w') as f:
     json.dump(args.controllerDefinition, f)
-  return updateReplicationController('{0}'.format(args.isNew)).stdout
+  
+  az="NULL"
+  if 'nodeSelector' in args.controllerDefinition['spec']['template']['spec']:
+  	az=args.controllerDefinition['spec']['template']['spec']['nodeSelector']['az']
+  	
+  return updateReplicationController('{0} {1}'.format(args.isNew, az)).stdout
 
 Scripts:
   updateReplicationController:

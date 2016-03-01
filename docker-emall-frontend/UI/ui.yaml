@@ -1,0 +1,47 @@
+Version: 2
+
+Application:
+  ?:
+    type: io.murano.apps.docker.DockerEmallFrontend
+  name: $.appConfiguration.name
+  host: $.appConfiguration.host
+  backendhost: $.appConfiguration.backendhost
+  publish: $.appConfiguration.publish
+
+
+Forms:
+  - appConfiguration:
+      fields:
+        - name: license
+          type: string
+          description: Apache License, Version 2.0
+          hidden: true
+          required: false
+        - name: name
+          type: string
+          label: Application Name
+          initial: DockerEmallFrontend
+          description: >-
+            Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
+            underline are allowed
+        - name: host
+          type:
+            - io.murano.apps.docker.kubernetes.KubernetesPod
+            - io.murano.apps.docker.DockerStandaloneHost
+          label: Container Host
+          description: >-
+            Select an instance of Docker contaniner hosting provider to run the app
+        - name: backendhost
+          type:
+            - io.murano.apps.docker.DockerEmallBackend
+            #- io.murano.apps.docker.DockerMySQL
+          label: Backend Container Host
+          description: >-
+            Select an pod that contains the DockerEmallBackend
+        - name: publish
+          type: boolean
+          label: Visible from outside
+          initial: true
+          required: false
+          description: >-
+            Check if you intend to access application from the Internet
