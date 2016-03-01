@@ -23,7 +23,7 @@ listen {{$baseSvc}}-{{$port.port}} 0.0.0.0:{{$port.port}}
 {{$seKey := get $se}}{{$ssKey := get $ss}}{{$seJson := json $seKey.Value}}
 {{$ssJson := json $ssKey.Value}}{{$baseSvc := base $svc}}
 {{if and (ne "kubernetes" $baseSvc) (ne "kubernetes-ro" $baseSvc)}}{{range $port := $ssJson.spec.ports}}
-listen {{$baseSvc}}-{{$port.port}} 0.0.0.0:{{$port.port}}
+listen {{$baseSvc}}-{{$port.port}} 0.0.0.0:{{$port.targetPort}}
     mode tcp
     balance leastconn
 {{range $subset := $seJson.subsets}}{{range $index, $endpoint := $subset.addresses}}
