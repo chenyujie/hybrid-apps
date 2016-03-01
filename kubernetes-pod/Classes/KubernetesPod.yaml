@@ -114,6 +114,8 @@ Methods:
       - container:
           Contract: $.class(docker:DockerContainer)
     Body:
+      - $._environment.reporter.report($, 'hostContainer in pod')
+      - $._environment.reporter.report($, 'podDefinition in hostContainer  {0}'.format($._podDefinition))
       - $._loadCurrentPodDefinition()
       - $podName: $._getPodName()
       - For: port
@@ -132,6 +134,17 @@ Methods:
         Then:
           - $image: format('{0}/{1}', $.kubernetesCluster.dockerRegistry, $container.image)
 
+      - $envs: $container.env.keys().select(dict(name => $, value => $container.env.get($)))
+      - If: $container.twoPhase
+        Then:
+          - $publicPoints: $.kubernetesCluster.createService(
+                applicationName => $container.name,
+                applicationPorts => $container.ports,
+                podId => $podName)
+          - $publicIP: $publicPoints.where($.scope = 'public').select(format('{0}:{1}', $.address, $.port))[0]
+          - $df: {'name': 'MAGENTO_URL', 'value': $publicIP}
+          - $envs: $envs + list($df)
+
       - $containerDef:
           name: toLower($container.name)
           image: $image
@@ -142,8 +155,8 @@ Methods:
               name => $this._generateVolumeName($container.name, $container.volumes.get($)),
               mountPath => $
             ))
-          env: $container.env.keys().select(dict(name => $, value => $container.env.get($)))
-          resources: {'limits': {'cpu': 500m}}
+          env: $envs
+          resources: {'limits': {'cpu': 300m}}
 
       - $newVolumes: $container.volumes.values().select(
           $this._buildVolumeEntry($container.name, $))
@@ -153,12 +166,15 @@ Methods:
             containers: [$containerDef]
             volumes: $newVolumes
       - $._podDefinition: $._podDefinition.mergeWith($diff)
+      
       - $.deploy()
-      - $._environment.reporter.report($, 'Creating services {0}'.format($container.name))
-      - $.kubernetesCluster.createService(
-            applicationName => $container.name,
-            applicationPorts => $container.ports,
-            podId => $podName)
+      
+      - If: not $container.twoPhase
+        Then:
+          - $.kubernetesCluster.createService(
+                applicationName => $container.name,
+                applicationPorts => $container.ports,
+                podId => $podName)
       - Return: $.getEndpoints($container.name)
 
 
@@ -281,6 +297,7 @@ Methods:
 
   deploy:
     Body:
+      - $._environment.reporter.report($, 'deploy in pod')
       - $._loadCurrentPodDefinition()
       - $prevPod: $.getAttr(lastPodDeployed, null)
       - $prevReplicas: $.getAttr(lastReplicas, 0)

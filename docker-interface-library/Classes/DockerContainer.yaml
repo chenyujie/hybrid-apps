@@ -41,6 +41,10 @@ Properties:
     Contract:
       $.string().notNull(): $.class(DockerVolume).notNull()
     Default: {}
+    
+  twoPhase:
+    Contract: $.bool()
+    Default: false
 
 Methods:
   getRepresentation:

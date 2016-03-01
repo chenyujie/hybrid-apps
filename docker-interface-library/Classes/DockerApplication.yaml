@@ -36,11 +36,44 @@ Methods:
   initialize:
     Body:
       - $._environment: $.find(std:Environment).require()
+      - $.cinderVol: {}
+
+  extraCinderVolume:
+    Arguments:
+      - volume:
+          Contract: $.class(DockerCinderVolume).notNull()
+      - mountPath:
+          Contract: $.string().notNull()
+    Body:
+      - $vol:
+          $mountPath: $volume
+      - $vol2:
+          volumes: $vol
+      
+      - If: $.cinderVol = null
+        Then:
+          - $.cinderVol: $vol
+        Else:
+          - $.cinderVol: $.cinderVol.mergeWith($vol)
+      - $._environment.reporter.report($this, 'cindervol1 {0} vol {1}'.format($.cinderVol, $vol))
+      
+  config:
+    Body:
+    
+  _getContainer:
+    Body:
+      - $container: $.getContainer()
+      - $cinderVol: $.getAttr(extraVol, null)
 
   deploy:
     Body:
-      #- $.host.deploy()
+      - $._environment.reporter.report($, 'deploy in dockerApplication')
       - $container: $.getContainer()
+      - $diff:
+          volumes:
+            $.cinderVol
+      - $container: $container.mergeWith($diff)       
+
       - $repr: $._getContainerRepresentation($container)
       - If: $.getAttr(container, null) != $repr
         Then:
@@ -56,7 +89,6 @@ Methods:
             - Rethrow:
           Else:
           - $.onInstallationFinish()
-
 
   destroy:
     Body:

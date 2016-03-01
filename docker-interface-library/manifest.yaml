@@ -27,8 +27,10 @@ Tags: [Docker, Kubernetes]
 
 Classes:
  io.murano.apps.docker.DockerApplication: DockerApplication.yaml
+ io.murano.apps.docker.DockerCinderVolume: DockerCinderVolume.yaml
  io.murano.apps.docker.DockerContainer: DockerContainer.yaml
  io.murano.apps.docker.DockerContainerHost: DockerContainerHost.yaml
+ io.murano.apps.docker.DockerFlockerVolume: DockerFlockerVolume.yaml
  io.murano.apps.docker.DockerHelpers: DockerHelpers.yaml
  io.murano.apps.docker.DockerHostVolume: DockerHostVolume.yaml
  io.murano.apps.docker.DockerTempVolume: DockerTempVolume.yaml
