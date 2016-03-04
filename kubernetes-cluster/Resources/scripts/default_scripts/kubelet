@@ -9,6 +9,8 @@ KUBELET_OPTS="--address=0.0.0.0 \
   --hostname_override=%%IP%% \
   --api_servers=%%MASTER_IP%%:8080 \
   --logtostderr=false \
+  --cloud-provider=openstack \
+  --cloud-config=/root/cloud.conf \
   --log_dir=/var/log/kubernetes"
 
 # Add more envionrment settings used by kube-scheduler here

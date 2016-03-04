@@ -20,11 +20,18 @@ Parameters:
   masterIp: $masterIp
   dockerRegistry: $dockerRegistry
   cAdvisorPort: $cAdvisorPort
+  apiAddress: $apiAddress
+  authHost: $authHost
+  authUrl: $authUrl
+  username: $username
+  password: $password
+  region: $region
+  tenant: $tenant
 
 Body: |
   if args.dockerRegistry:
     setupRegistry(args.dockerRegistry)
-  setup('{0} {1} {2} {3}'.format(args.name, args.ip, args.masterIp, args.cAdvisorPort))
+  setup('{0} {1} {2} {3} {4} {5} {6} {7}/{8} {9}/{10}'.format(args.name, args.ip, args.masterIp, args.cAdvisorPort, args.apiAddress, args.authHost, args.authUrl, args.username, args.password, args.region, args.tenant))
 
 Scripts:
   setup:

@@ -24,6 +24,9 @@ Properties:
   cAdvisorPort:
     Contract: $.int().notNull()
 
+  apiProxyAddress:
+    Contract: $.string().notNull()
+
 Methods:
   initialize:
     Body:
@@ -69,7 +72,14 @@ Methods:
                 ip => $.getIp(),
                 masterIp => $._cluster.masterNode.getIp(),
                 dockerRegistry => $._cluster.dockerRegistry,
-                cAdvisorPort => $.cAdvisorPort
+                cAdvisorPort => $.cAdvisorPort,
+                apiAddress => $.apiProxyAddress,
+                authHost => config(keystone_authtoken, auth_host),
+                authUrl => config(keystone_authtoken, auth_uri),
+                username => config(keystone_authtoken, admin_user),
+                password => config(keystone_authtoken, admin_password),
+                region => config(default_region_name),
+                tenant => config(keystone_authtoken, admin_tenant_name)
               ))
           - $.instance.agent.call($template, $resources)
           - $.setAttr(nodeConfigured, true)

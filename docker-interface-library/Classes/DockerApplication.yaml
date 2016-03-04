@@ -47,15 +47,12 @@ Methods:
     Body:
       - $vol:
           $mountPath: $volume
-      - $vol2:
-          volumes: $vol
       
       - If: $.cinderVol = null
         Then:
           - $.cinderVol: $vol
         Else:
           - $.cinderVol: $.cinderVol.mergeWith($vol)
-      - $._environment.reporter.report($this, 'cindervol1 {0} vol {1}'.format($.cinderVol, $vol))
       
   config:
     Body:

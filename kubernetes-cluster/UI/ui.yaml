@@ -43,6 +43,7 @@ Templates:
       volume_type: $.minionConfig.volume_type
       network: $.masterConfig.network
     cAdvisorPort: $index + 4193
+    apiProxyAddress: $.minionConfig.apiProxyAddress
 
   gatewayNode:
     ?:
@@ -187,6 +188,11 @@ Forms:
           type: azones
           label: Availability Zones of Minion nodes
           description: Select all availability zones where the application would be installed.
+          required: true
+        - name: apiProxyAddress
+          type: string
+          label: API Address
+          description: API proxy address for API network.
           required: true
   - gatewayConfig:
       fields:
