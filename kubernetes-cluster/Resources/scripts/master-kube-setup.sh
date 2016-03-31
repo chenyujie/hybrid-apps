@@ -10,8 +10,8 @@ openssl req -x509 -new -nodes -key ca.key -subj "/CN=$hostname" -days 5000 -out 
 openssl genrsa -out server.key 2048
 openssl req -new -key server.key -subj "/CN=$hostname" -out server.csr
 openssl x509 -req -in server.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out server.crt -days 5000
-mkdir -p /var/run/kubernetes/
-cp ca.crt ca.key ca.srl server.crt server.csr server.key /var/run/kubernetes/
+mkdir -p /opt/kube-ca/
+cp ca.crt ca.key ca.srl server.crt server.csr server.key /opt/kube-ca/
 
 #service kube-proxy stop
 service kube-scheduler stop

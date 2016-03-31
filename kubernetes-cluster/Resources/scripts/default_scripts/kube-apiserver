@@ -13,7 +13,7 @@
 KUBE_APISERVER_OPTS="--address=0.0.0.0 --portal_net=11.1.0.0/16 --logtostderr=false --log_dir=/var/log/kubernetes \
 --v=0 --admission_control=ServiceAccount --etcd_servers=http://127.0.0.1:4001 \
 --insecure_bind_address=0.0.0.0 --insecure_port=8080 --kubelet_port=10250 --service-cluster-ip-range=10.0.0.1/24 --allow_privileged=false \
---service-node-port-range=30000-35535 --secure-port=443 --client_ca_file=/var/run/kubernetes/ca.crt --tls-private-key-file=/var/run/kubernetes/server.key \
---tls-cert-file=/var/run/kubernetes/server.crt"
+--service-node-port-range=30000-35535 --secure-port=443 --client_ca_file=/opt/kube-ca/ca.crt --tls-private-key-file=/opt/kube-ca/server.key \
+--tls-cert-file=/opt/kube-ca/server.crt"
 
 # Add more envionrment settings used by kube-apiserver here

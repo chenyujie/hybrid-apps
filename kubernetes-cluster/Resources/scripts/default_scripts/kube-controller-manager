@@ -7,7 +7,7 @@
  #KUBE_CONTROLLER_MANAGER_OPTS="--master=127.0.0.1:8080 \
  #  --logtostderr=false --log_dir=/var/log/kubernetes"
 
-KUBE_CONTROLLER_MANAGER_OPTS="--root-ca-file=/var/run/kubernetes/ca.crt \
---service-account-private-key-file=/var/run/kubernetes/server.key"
+KUBE_CONTROLLER_MANAGER_OPTS="--root-ca-file=/opt/kube-ca/ca.crt \
+--service-account-private-key-file=/opt/kube-ca/server.key"
 
  # Add more envionrment settings used by kube-controller-manager here
