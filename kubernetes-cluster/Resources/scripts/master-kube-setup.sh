@@ -43,6 +43,14 @@ cp initd_scripts/kube-scheduler /etc/init.d/
 
 service kube-apiserver start
 service kube-scheduler start
+for((i=0;i<10;i++)) ; do
+    c=`ps aux|grep -c kube-apiserver`
+    if [[ $c != '1' ]]
+    then
+        break
+    fi
+    sleep 1
+done
 service kube-controller-manager start
 
 sleep 1
