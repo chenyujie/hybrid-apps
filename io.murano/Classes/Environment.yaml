@@ -83,6 +83,7 @@ Methods:
       #    resources: {}
       #- $.stack.updateTemplate($minimalStack)
       #- $.stack.push()
+      - $.applications.pselect($.config())
       - $.applications.pselect($.deploy())
 
   destroy:
