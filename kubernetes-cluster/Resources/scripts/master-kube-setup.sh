@@ -22,6 +22,8 @@ cp -f default_scripts/kube-apiserver /etc/default/
 cp -f default_scripts/kube-scheduler /etc/default/
 cp -f default_scripts/kube-controller-manager /etc/default/
 
+cp -f initd_scripts/getCpuLoad /usr/bin/
+
 cp init_conf/kube-apiserver.conf /etc/init/
 cp init_conf/kube-controller-manager.conf /etc/init/
 cp init_conf/kube-scheduler.conf /etc/init/

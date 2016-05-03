@@ -513,3 +513,16 @@ Methods:
             newSize => $newSize
           ))
       - $.masterNode.instance.agent.call($template, $resources)
+
+  getCpuLoad:
+    Arguments:
+      - rcName:
+          Contract: $.string().notNull()
+    Body:
+      - $._environment.reporter.report($this, 'getCpuLoad called')
+      - $resources: new(sys:Resources)
+#      - $template: $resources.yaml('GetCpuLoad.template')
+      - $template: $resources.yaml('GetCpuLoad.template').bind(dict(
+            rcName => $rcName
+          ))
+      - Return: $.masterNode.instance.agent.call($template, $resources)

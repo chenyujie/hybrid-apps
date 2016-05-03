@@ -47,6 +47,7 @@ Scripts:
       - initd_scripts/kube-proxy
       - default_scripts/kube-ui-rc.yaml
       - default_scripts/kube-ui-svc.yaml
+      - initd_scripts/getCpuLoad
 
     Options:
       captureStdout: true
