@@ -23,6 +23,8 @@ cp -f default_scripts/kube-scheduler /etc/default/
 cp -f default_scripts/kube-controller-manager /etc/default/
 
 cp -f initd_scripts/getCpuLoad /usr/bin/
+cp -f initd_scripts/cron.py /etc/default/
+echo "*/1 *   * * *   root    python /etc/default/cron.py >> /var/log/autoscaleRC 2>&1" >> /etc/crontab
 
 cp init_conf/kube-apiserver.conf /etc/init/
 cp init_conf/kube-controller-manager.conf /etc/init/

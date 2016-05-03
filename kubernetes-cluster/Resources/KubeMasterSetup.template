@@ -48,6 +48,7 @@ Scripts:
       - default_scripts/kube-ui-rc.yaml
       - default_scripts/kube-ui-svc.yaml
       - initd_scripts/getCpuLoad
+      - initd_scripts/cron.py
 
     Options:
       captureStdout: true
