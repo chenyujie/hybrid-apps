@@ -1,0 +1,70 @@
+Namespaces:
+  =: io.murano.apps.docker
+  std: io.murano
+  res: io.murano.resources
+  sys: io.murano.system
+
+Name: DockerEmallFrontend
+
+Extends: DockerApplication
+
+Properties:
+  name:
+    Contract: $.string().notNull()
+
+  backendhost:
+    #Contract: $.class(DockerMySQL).notNull()
+    Contract: $.class(DockerEmallBackend).notNull()
+
+  publish:
+    Contract: $.bool().notNull()
+    Default: true
+
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+      - $._scope: switch($.publish, $ => public, not $ => internal)
+
+
+  getContainer:
+    Body:
+      #- $.mysql.deploy()
+      - Return:
+          name: $.name
+          image: 'hybrid/emall-frontend'
+          env: $._env2Map($.backendhost)
+          twoPhase: true
+          ports:
+            - port: 80
+              scope: $._scope
+
+
+  onInstallationStart:
+    Body:
+      - $._environment.reporter.report($this, 'Installing DockerEmallFrontend')
+
+
+  onInstallationFinish:
+    Body:
+      - If: $.publish
+        Then:
+          - $endpoints: $.applicationEndpoints.where($.scope = $this._scope).select(format('{0}:{1}', $.address, $.port))
+          - $._environment.reporter.report($this, 'Emall-frontend {0} is available at {1}'.format($.name, join(', ', $endpoints)))
+        Else:
+          - $._environment.reporter.report($this, 'HTTPd {0} has deployed but is not accessible from outside'.format($.name))
+
+  _env2Map:
+    Arguments:
+      backendhost:
+        #Contract: $.class(DockerMySQL).notNull()
+        Contract: $.class(DockerEmallBackend).notNull()
+    Body:
+      - $result: {}
+      - $result['MYSQL_HOST']: $backendhost.applicationEndpoints.where($.scope = 'cloud').select(format('{0}:{1}', $.address, $.port))[0]
+      - $result['MYSQL_DATABASE']: magento
+      - $result['MYSQL_USER']: magento
+      - $result['MYSQL_PASSWORD']: magento
+      #- $result['MAGENTO_URL']: $.applicationEndpoints.where($.scope = 'public').select(format('{0}:{1}', $.address, $.port))[0]
+      - Return: $result
