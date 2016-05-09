@@ -1,0 +1,188 @@
+Namespaces:
+  =: io.murano.apps.huawei
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: EmallBackendCluster
+
+Extends: std:Application
+
+Properties:  
+  name:
+    Contract: $.string().notNull()
+
+  emallNodes:
+    Contract:
+      - $.class(res:LinuxMuranoInstance).notNull()
+      - 1
+
+  nodeCount:
+    Contract: $.int().notNull().check($ > 0)
+    Usage: InOut
+
+  availabilityZones:
+    Contract:
+      - $.string().notNull()
+
+  network:
+    Contract: $.string().notNull()
+
+  vip:
+    Contract: $.string()
+    Usage: Out
+
+  instance_uuids:
+    Contract:
+      - az: $.string().notNull()
+        id: $.string().notNull()
+    Default: []
+    Usage: Out
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+      - $._netExplorer: new(sys:NetworkExplorer)
+      - $.template: {}
+
+  getAZ:
+    Body:
+      - $AZIdx: $.getAttr(AZIdx, 0)
+      - $AZIdx: $AZIdx + 1
+      - If: $AZIdx >= len($.availabilityZones)
+        Then:
+          - $AZIdx: 0
+      - $.setAttr(AZIdx, $AZIdx)
+      - Return: $.availabilityZones[$AZIdx]
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $securityGroupIngress:
+              - ToPort: 3306
+                FromPort: 3306
+                IpProtocol: tcp
+                External: true
+              - ToPort: 4568
+                FromPort: 4567
+                IpProtocol: tcp
+                External: true
+              - ToPort: 4444
+                FromPort: 4444
+                IpProtocol: tcp
+                External: true
+          - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)
+          - $._environment.reporter.report($this, 'creating emall backend cluster servers...')
+
+          - $idx: $.getAttr(IDX, 0)
+          - While: $idx < $.nodeCount
+            Do:
+              - $.emallNodes[$idx].setAZ($.getAZ())
+              - $idx: $idx + 1
+          - $.setAttr(IDX, $idx)
+
+          - Parallel:
+              - Do: $.emallNodes.take($.nodeCount).pselect($.deploy())
+
+          - $networks: $._netExplorer.listNetworks()
+          - For: net
+            In: $networks
+            Do:
+              - If: $net.id = $.network
+                Then:
+                  - $subId: $net.subnets[0]
+
+          - $lb_id: randomName()
+          - $vip_name: $lb_id + '-vip'
+          - $template:
+              resources:
+                $lb_id:
+                  type: 'OS::Neutron::Pool'
+                  properties:
+                    name: $.name
+                    lb_method: 'ROUND_ROBIN'
+                    protocol: 'TCP'
+                    subnet: $subId
+                    vip:
+                      subnet: $subId
+                      protocol_port: 3306
+              outputs:
+                $vip_name:
+                  value:
+                    get_attr: [$lb_id, vip, address]
+          - $.template: $.template.mergeWith($template)
+          - For: node
+            In: $.emallNodes
+            Do:
+              - $.joinLB($lb_id, $node)
+          - $._environment.stack.updateTemplate($.template)
+          - $.setAttr(template, $.template)
+          - $._environment.stack.push()
+          - $outputs: $._environment.stack.output()
+          - $.vip: $outputs.get($vip_name)
+          - $.instance_uuids: list()
+          - For: node
+            In: $.emallNodes
+            Do:
+              - $new_instance_uuid:
+                  az: $node.availabilityZone
+                  id: $outputs.get($node.name + '-id')
+              - $.instance_uuids: $.instance_uuids + list($new_instance_uuid)
+          - $.setAttr(instance_uuids, $.instance_uuids)
+          - Parallel:
+              - Do: $.emallNodes.take($.nodeCount).pselect($.restart())
+
+          - $members: $.emallNodes[0].ipAddresses[0] + ',' + $.emallNodes[1].ipAddresses[0]
+
+          - $._environment.reporter.report($, 'Configuring master node')
+          - $resources: new(sys:Resources)
+          - $template: $resources.yaml('EmallBackendCluster.template').bind(dict(
+                cluster => $.name,
+                members => $members,
+                name => 'master',
+                master => 'true'
+              ))
+          - $.emallNodes[0].agent.call($template, $resources)
+
+          - $._environment.reporter.report($, 'Configuring slave node')
+          - $resources: new(sys:Resources)
+          - $template: $resources.yaml('EmallBackendCluster.template').bind(dict(
+                cluster => $.name,
+                members => $members,
+                name => 'slave',
+                master => 'false'
+              ))
+          - $.emallNodes[1].agent.call($template, $resources)
+
+          - $.setAttr(deployed, true)
+          - $._environment.reporter.report($this, format('emall backend cluster server({0}) is up and running', $.vip))
+
+  destroy:
+    Body:
+      - For: node
+        In: $.emallNodes
+        Do:
+          - $node.destroy()
+
+  joinLB:
+    Arguments:
+      - lb_id:
+          Contract: $.string()
+      - node:
+          Contract: $.class(res:LinuxMuranoInstance).notNull()
+    Body:
+      - $template:
+          resources:
+            $node.name + '-member':
+              type: 'OS::Neutron::PoolMember'
+              properties:
+                pool_id: {get_resource: $lb_id}
+                address: {get_attr: [$node.name, first_address]}
+                protocol_port: 3306
+          outputs:
+            $node.name + '-id':
+              value:
+                get_attr: [$node.name, show, id]
+      - $.template: $.template.mergeWith($template)
