@@ -1,0 +1,92 @@
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may
+#  not use this file except in compliance with the License. You may obtain
+#  a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations
+#  under the License.
+
+Namespaces:
+  =: io.murano.apps.docker.kubernetes
+  std: io.murano
+  res: io.murano.resources
+  sys: io.murano.system
+
+Name: KubernetesMinionNode
+
+Extends: KubernetesNode
+
+Properties:
+  cAdvisorPort:
+    Contract: $.int().notNull()
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+      - $._cluster: $.find(KubernetesCluster).require()
+
+
+  deployInstance:
+    Body:
+      - If: not $.getAttr(instanceDeployed, false)
+        Then:
+          - $._environment.reporter.report($this, 'Creating Kubernetes Node {0}'.format($.instance.name))
+#          - $.instance.name : $.id() + $.instance.name
+          - $.super($.deployInstance())
+          - $.setAttr(instanceDeployed, true)
+
+
+  restart:
+    Body:
+      - $.instance.restart()
+      - If: $.instance.assignFloatingIp
+        Then:
+          - $._environment.reporter.report($, 'Minion {0} available at {1}'.format($.instance.name, $.instance.floatingIpAddress))
+
+
+  setupEtcd:
+
+
+  setupNode:
+    Body:
+      - If: not $.getAttr(nodeConfigured, false)
+        Then:
+          - $._environment.reporter.report($this, 'Setup Flannel network on {0}'.format($.instance.name))
+          - $resources: new(sys:Resources)
+          - $template: $resources.yaml('SetupFlannelNode.template').bind(dict(
+                masterIp => $._cluster.masterNode.getIp(),
+                ip => $.getIp()
+              ))
+          - $.instance.agent.call($template, $resources)
+
+          - $._environment.reporter.report($, 'Setup Kubernetes Minion on {0}'.format($.instance.name))
+          - $template: $resources.yaml('KubeMinionSetup.template').bind(dict(
+                name => $.instance.name,
+                ip => $.getIp(),
+                masterIp => $._cluster.masterNode.getIp(),
+                dockerRegistry => $._cluster.dockerRegistry,
+                cAdvisorPort => $.cAdvisorPort
+              ))
+          - $.instance.agent.call($template, $resources)
+          - $.setAttr(nodeConfigured, true)
+          - $msg: 'cAdvisor monitoring for Node {0} is available at http://{1}:{2}'
+          - $._environment.reporter.report($this, $msg.format($.instance.name, $._cluster.masterNode.getExtIp(), $.cAdvisorPort))
+
+
+  removeFromCluster:
+    Body:
+      - If: $.getAttr(nodeConfigured, false)
+        Then:
+          - $._environment.reporter.report($this, 'Deleting Kubernetes Minion')
+          - $resources: new(sys:Resources)
+          - $template: $resources.yaml('RemoveMinion.template').bind(dict(
+                nodeId => $.getIp()
+              ))
+          - $._cluster.masterNode.instance.agent.call($template, $resources)
+          - $._environment.reporter.report($this, 'Node {0} deleted'.format($.instance.name))
+          - $.setAttr(nodeConfigured, false)

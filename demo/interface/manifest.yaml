@@ -1,0 +1,38 @@
+#  Licensed under the Apache License, Version 2.0 (the "License"); you may
+#  not use this file except in compliance with the License. You may obtain
+#  a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+#  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+#  License for the specific language governing permissions and limitations
+#  under the License.
+
+Format: 1.0
+Type: Library
+FullName: io.murano.apps.docker.Interfaces
+Name: Docker Interface Library
+Description: |
+    Library package containing all base classes and interfaces for docker
+    applications and docker hosts.
+
+    Contains definitions of DockerApplication, DockerContainer,
+    DockerHost, DockerVolume, ApplicationPort and all other classes
+    that are used to pass information between docker applications and docker
+    host providers.
+Author: 'HUAWEI'
+Tags: [Docker, Kubernetes]
+
+Classes:
+ io.murano.apps.docker.DockerApplication: DockerApplication.yaml
+ io.murano.apps.docker.DockerCinderVolume: DockerCinderVolume.yaml
+ io.murano.apps.docker.DockerContainer: DockerContainer.yaml
+ io.murano.apps.docker.DockerContainerHost: DockerContainerHost.yaml
+ io.murano.apps.docker.DockerFlockerVolume: DockerFlockerVolume.yaml
+ io.murano.apps.docker.DockerHelpers: DockerHelpers.yaml
+ io.murano.apps.docker.DockerHostVolume: DockerHostVolume.yaml
+ io.murano.apps.docker.DockerTempVolume: DockerTempVolume.yaml
+ io.murano.apps.docker.DockerVolume: DockerVolume.yaml
+ io.murano.apps.docker.ApplicationPort: ApplicationPort.yaml

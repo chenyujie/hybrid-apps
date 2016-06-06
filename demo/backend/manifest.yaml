@@ -1,0 +1,9 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.huawei.EmallBackendCluster
+Name: Emall Backend Cluster
+Description: |
+Author: 'HUAWEI'
+Tags: [ Magento DB Cluster Servers ]
+Classes:
+ io.murano.apps.huawei.EmallBackendCluster: EmallFrontend.yaml

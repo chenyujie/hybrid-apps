@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import os
+import json
+import sys
+import datetime
+#import iso8601
+_ISO8601_TIME_FORMAT_SUBSECOND = '%Y-%m-%dT%H:%M:%S.%f'
+
+def getCpu(ip, container):
+    #r=os.popen('curl http://218.17.215.171:8080/api/v1/proxy/nodes/192.168.0.200:4194/api/v1.0/containers/ 2>/dev/null').readlines()
+    if container == 'NULL':
+        r = os.popen('curl localhost:8080/api/v1/proxy/nodes/%s:4194/api/v1.0/containers/ 2>/dev/null' % ip).read()
+    else:
+	r = os.popen('curl localhost:8080/api/v1/proxy/nodes/%s:4194/api/v1.0/containers/docker/%s 2>/dev/null' % (ip, container)).read()
+    #curl http://58.60.106.122:4194/api/v2.0/containers/docker/8c1f3be1aefe01843bc0ca3765e38408ddebbb487b9f757066e6278ec8e95fb2
+    cpu = json.loads(r)
+    t = cpu['stats'][0]['timestamp']
+    mch = json.loads(os.popen('curl localhost:8080/api/v1/proxy/nodes/%s:4194/api/v1.0/machine 2>/dev/null' % ip).read())
+    if "has_cpu" not in cpu["spec"]:
+	print 'no cpu'
+	sys.exit(1)
+    stl = len(cpu['stats'])
+    i=1
+    total = 0.0
+    cpuUsage = 0.0
+    while i < stl:
+        cur = cpu['stats'][i]
+	pre = cpu['stats'][i-1]
+	rawUsage = cur['cpu']['usage']['total'] - pre['cpu']['usage']['total']
+	interval = datetime.datetime.strptime(cur['timestamp'][:-4], _ISO8601_TIME_FORMAT_SUBSECOND) - datetime.datetime.strptime(pre['timestamp'][:-4], _ISO8601_TIME_FORMAT_SUBSECOND) 
+	interval = interval.seconds*1000000000 + interval.microseconds*1000
+	cpuUsage = ((rawUsage*1.0 / interval) / mch['num_cores']) * 100
+	if cpuUsage > 100:
+	    cpuUsage = 100.0
+	total += cpuUsage
+	i += 1
+	#print cpuUsage
+    print '%.2f' % (total / (stl-1)) + '%'
+        
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv
+    getCpu(argv[1], argv[2]) 
+ 
+if __name__ == '__main__':
+   sys.exit(main())   
+
