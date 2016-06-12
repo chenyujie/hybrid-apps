@@ -1,23 +1,22 @@
 #!/bin/bash
 
-# $1 - NAME
+# $1 - MASTER_IP
 # $2 - IP
-# $3 - MASTER_IP
-# $4 - cAdvisor port
+# $3 - AZ
 
 mkdir /var/log/kubernetes
 mkdir -p /var/run/murano-kubernetes
 
-sed -i.bkp "s/%%MASTER_IP%%/$3/g" default_scripts/kube-proxy
-sed -i.bkp "s/%%MASTER_IP%%/$3/g" default_scripts/kubelet
+sed -i.bkp "s/%%MASTER_IP%%/$1/g" default_scripts/kube-proxy
+sed -i.bkp "s/%%MASTER_IP%%/$1/g" default_scripts/kubelet
 sed -i.bkp "s/%%IP%%/$2/g" default_scripts/kubelet
 
-cp init_conf/kubelet.conf /etc/init/
-cp init_conf/kube-proxy.conf /etc/init/
+cp -f init_conf/kubelet.conf /etc/init/
+cp -f init_conf/kube-proxy.conf /etc/init/
 
 chmod +x initd_scripts/*
-cp initd_scripts/kubelet /etc/init.d/
-cp initd_scripts/kube-proxy /etc/init.d/
+cp -f initd_scripts/kubelet /etc/init.d/
+cp -f initd_scripts/kube-proxy /etc/init.d/
 
 cp -f default_scripts/kube-proxy /etc/default
 cp -f default_scripts/kubelet /etc/default/
@@ -25,6 +24,7 @@ cp -f default_scripts/kubelet /etc/default/
 service kubelet start
 service kube-proxy start
 
-sleep 1
+RETRY=15
+while [[ $RETRY -gt 0 && ! `curl -s $2:8080 -o /dev/null` ]]; do sleep 2; RETRY=`expr $RETRY - 1`; done
 
-/opt/bin/etcdctl -C http://$3:4001 mk /registry/services/endpoints/mapping/$2:4194 "$4"
+/opt/bin/kubectl -s $1:8080 label nodes $2 az=$3
