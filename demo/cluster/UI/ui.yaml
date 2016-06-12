@@ -42,7 +42,6 @@ Templates:
       volume: $.minionConfig.volume
       volume_type: $.minionConfig.volume_type
       network: $.masterConfig.network
-    cAdvisorPort: $index + 4193
 
 #  gatewayNode:
 #    ?:
@@ -64,7 +63,7 @@ Application:
     type: io.murano.apps.docker.kubernetes.KubernetesCluster
   name: $.masterConfig.name
   masterNode: $masterNode
-  minionNodes: repeat($minionNode, $.minionConfig.minionCount)
+  minionNodes: repeat($minionNode, $.minionConfig.maxMinionCount)
   nodeCount: $.minionConfig.minionCount
   availabilityZones: $.minionConfig.availabilityZones
 #  gatewayCount: 1
@@ -152,10 +151,9 @@ Forms:
         - name: maxMinionCount
           type: integer
           label: Maximum number of minions
-          initial: 3
+          initial: 2
           required: flase
-          hidden: true
-          minValue: 0
+          minValue: 1
           description: >-
             Select maximum number of minions
         - name: volume
