@@ -450,7 +450,7 @@ Methods:
 
 
   scaleNodesUp:
-    #Usage: Action
+    Usage: Action
     Body:
       - If: $.nodeCount < len($.minionNodes)
         Then:
@@ -462,7 +462,7 @@ Methods:
 
 
   scaleNodesDown:
-    #Usage: Action
+    Usage: Action
     Body:
       - If: $.nodeCount > 1
         Then:
@@ -509,16 +509,6 @@ Methods:
             newSize => $newSize
           ))
       - $.masterNode.instance.agent.call($template, $resources)
-
-  testAction:
-    Usage: Action
-    Body:
-      - $._environment.reporter.report($this, 'Action exportConfig called')
-      - $resources: new(sys:Resources)
-      - $template: $resources.yaml('testAction.template')
-      - $result: $.masterNode.instance.agent.call($template, $resources)
-      - $._environment.reporter.report($this, format('test {0}', $result))
-      - Return: $result
 
   getCpuLoad:
     Usage: Action
