@@ -369,11 +369,14 @@ Methods:
     Arguments:
       - rcName:
           Contract: $.string().notNull()
+      - az:
+          Contract: $.string().notNull()
     Body:
       - $resources: new(sys:Resources)
 #      - $rc: f3
       - $template: $resources.yaml('scaleRcUp.template').bind(dict(
-            rcName => $rcName
+            rcName => $rcName,
+            az => $az
           ))
       - Return: $.kubernetesCluster.masterNode.instance.agent.call($template, $resources)
 
@@ -390,9 +393,12 @@ Methods:
     Arguments:
       - rcName:
           Contract: $.string().notNull()
+      - az:
+          Contract: $.string().notNull()
     Body:
       - $resources: new(sys:Resources)
       - $template: $resources.yaml('scaleRcDown.template').bind(dict(
-            rcName => $rcName
+            rcName => $rcName,
+            az => $az
           ))
       - Return: $.kubernetesCluster.masterNode.instance.agent.call($template, $resources)
