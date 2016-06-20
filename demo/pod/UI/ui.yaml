@@ -69,29 +69,29 @@ Forms:
       fields:
         - name: minLoad
           type: integer
-          label: minimum of cpu load
+          label: Minimum threshold of CPU Load
           initial: 10
           minValue: 0
           description: >-
-            minimum of cpu load
+            Minimum threshold of CPU Load
         - name: maxLoad
           type: integer
-          label: maximum of cpu load
+          label: Maximum threshold of CPU Load
           initial: 60
           minValue: 30
           required: false
           description: >-
-            maximum of cpu load
+            Maximum threshold of CPU Load
         - name: autoscale
           type: boolean
-          label: set autoscale
+          label: Enable Auto Scaling
           initial: false
           description: >-
-            set autoscale strategy, default:false
+            Enable autoscaling strategy, default is disabled
         - name: replicas
           type: integer
           label: Replicas (0 = disabled)
-          initial: 0
+          initial: 1
           minValue: 0
           description: >-
             Number of cluster Replicas. Setting to '0' prevents Replication Controller creation
