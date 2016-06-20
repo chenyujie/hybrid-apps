@@ -25,12 +25,10 @@ Methods:
   initialize:
     Body:
       - $._environment: $.find(std:Environment).require()
-      #- $._cluster: $.find(gw:KubernetesCluster).require()
       - $._scope: switch($.publish, $ => public, not $ => internal)
 
   getContainer:
     Body:
-      #- $.mysql.deploy()
       - Return:
           name: $.name
           image: 'hybrid/emall-frontend'
@@ -41,20 +39,21 @@ Methods:
 
   onInstallationStart:
     Body:
-      - $._environment.reporter.report($this, 'Installing DockerEmallFrontend')
       - $.EmallBackendCluster.deploy()
+      - $._environment.reporter.report($this, 'Installing DockerEmallFrontend')
 
   onInstallationFinish:
     Body:
       - If: $.publish
         Then:
           - $endpoints: $.applicationEndpoints.where($.scope = $this._scope).select(format('{0}:{1}', $.address, $.port))
-          - $._environment.reporter.report($this, 'Emall-frontend {0} is available at {1}'.format($.name, join(', ', $endpoints)))
+          - $._environment.reporter.report($this, 'Emall-frontend {0} is available at http://{1}'.format($.name, join(', http://', $endpoints)))
         Else:
           - $._environment.reporter.report($this, 'HTTPd {0} has deployed but is not accessible from outside'.format($.name))
 
   _env2Map:
     Body:
+      - $.host.deploy()
       - $._environment.reporter.report($this, 'gwip {0}'.format($.host.kubernetesCluster.masterNode.getExtIp()))
       - $result: {}
       - $result['MYSQL_HOST']: $.EmallBackendCluster.vip

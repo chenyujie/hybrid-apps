@@ -273,6 +273,7 @@ Methods:
 
   deploy:
     Body:
+      - $.kubernetesCluster.deploy()
       - $._loadCurrentPodDefinition()
       - $prevPod: $.getAttr(lastPodDeployed, null)
       - $prevReplicas: $.getAttr(lastReplicas, 0)
