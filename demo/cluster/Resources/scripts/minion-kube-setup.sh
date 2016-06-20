@@ -25,6 +25,6 @@ service kubelet start
 service kube-proxy start
 
 RETRY=15
-while [[ $RETRY -gt 0 && ! `curl -s $2:8080 -o /dev/null` ]]; do sleep 2; RETRY=`expr $RETRY - 1`; done
+while [[ $RETRY -gt 0 && ! `curl -s $1:8080 -o /dev/null` ]]; do sleep 2; RETRY=`expr $RETRY - 1`; done
 
 /opt/bin/kubectl -s $1:8080 label nodes $2 az=$3
