@@ -412,12 +412,14 @@ Methods:
     Body:
       - $.serviceEndpoints: $.getAttr(serviceEndpoints, list())
       - $resources: new(sys:Resources)
-      - $services: $.serviceEndpoints.where($.scope = internal and $.podId = $podId).select($.serviceName)
+      #- $services: $.serviceEndpoints.where($.scope = internal and $.podId = $podId).select($.serviceName)
+      - $services: $.serviceEndpoints.where($.scope = internal and $.podId = $podId and $.applicationName = $applicationName).select($.serviceName)
       - $template: $resources.yaml('DeleteServices.template').bind(dict(
             services => $services
           ))
       - $.masterNode.instance.agent.call($template, $resources)
-      - $.serviceEndpoints: $.serviceEndpoints.where($.podId != $podId)
+      #- $.serviceEndpoints: $.serviceEndpoints.where($.podId != $podId)
+      - $.serviceEndpoints: $.serviceEndpoints.where($.applicationName != $applicationName)
       - $.setAttr(serviceEndpoints, $.serviceEndpoints)
 
 

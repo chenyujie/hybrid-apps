@@ -310,21 +310,21 @@ Methods:
 #          - $content: $.kubernetesCluster.getCpuLoad(rcName => $rcName)
 #          - $._environment.reporter.report($, 'getCpuLoad {0}'.format($content))
 
-  destroy:
-    Body:
-      - Try:
-        - $prevReplicas: $.getAttr(lastReplicas, 0)
-        - If: $prevReplicas > 0
-          Then:
-            - $.kubernetesCluster.deleteReplicationController($._getReplicationControllerId())
-          Else:
-            - $.kubernetesCluster.deletePods(dict(id => $._getPodName()))
-        Catch:
-        - As: e
-          Do:
-            - $formatString: 'Error: {0}'
-            - $._environment.reporter.report_error($, $formatString.format($e.message))
-            - Rethrow:
+#  destroy:
+#    Body:
+#      - Try:
+#        - $prevReplicas: $.getAttr(lastReplicas, 0)
+#        - If: $prevReplicas > 0
+#          Then:
+#            - $.kubernetesCluster.deleteReplicationController($._getReplicationControllerId())
+#          Else:
+#            - $.kubernetesCluster.deletePods(dict(id => $._getPodName()))
+#        Catch:
+#        - As: e
+#          Do:
+#            - $formatString: 'Error: {0}'
+#            - $._environment.reporter.report_error($, $formatString.format($e.message))
+#            - Rethrow:
 
   _buildReplicationControllerDefinition:
     Arguments:
@@ -367,19 +367,10 @@ Methods:
 
   scaleRcUp:
     Usage: Action
-    Arguments:
-      - rcName:
-          Contract: $.string().notNull()
-      - az:
-          Contract: $.string().notNull()
     Body:
       - $resources: new(sys:Resources)
-#      - $rc: f3
-      - $template: $resources.yaml('scaleRcUp.template').bind(dict(
-            rcName => $rcName,
-            az => $az
-          ))
-      - Return: $.kubernetesCluster.masterNode.instance.agent.call($template, $resources)
+      - $template: $resources.yaml('scaleRcUp.template').bind(dict(rcName => $.name))
+      - $.kubernetesCluster.masterNode.instance.agent.call($template, $resources)
 
 #  scaleRcUp:
 #    Usage: Action
@@ -391,15 +382,7 @@ Methods:
  
   scaleRcDown:
     Usage: Action
-    Arguments:
-      - rcName:
-          Contract: $.string().notNull()
-      - az:
-          Contract: $.string().notNull()
     Body:
       - $resources: new(sys:Resources)
-      - $template: $resources.yaml('scaleRcDown.template').bind(dict(
-            rcName => $rcName,
-            az => $az
-          ))
-      - Return: $.kubernetesCluster.masterNode.instance.agent.call($template, $resources)
+      - $template: $resources.yaml('scaleRcDown.template').bind(dict(rcName => $.name))
+      - $.kubernetesCluster.masterNode.instance.agent.call($template, $resources)

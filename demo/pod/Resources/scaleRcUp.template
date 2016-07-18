@@ -16,10 +16,9 @@ Name: scaleRcUp
 
 Parameters:
   rcName: $rcName
-  az: $az
 
 Body: |
-  return scaleRcUp('{0} {1}'.format(args.rcName, args.az)).stdout
+  return scaleRcUp('{0}'.format(args.rcName)).stdout
 
 Scripts:
   scaleRcUp:

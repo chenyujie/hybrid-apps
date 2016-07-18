@@ -9,7 +9,3 @@ Author: 'HUAWEI'
 Tags: [docker, kubernetes, pod]
 Classes:
  io.murano.apps.docker.kubernetes.KubernetesPod: KubernetesPod.yaml
-
-Require:
-    io.murano.apps.docker.Interfaces:
-    io.murano.apps.docker.kubernetes.KubernetesCluster:

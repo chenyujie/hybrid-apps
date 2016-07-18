@@ -16,10 +16,9 @@ Name: scaleRcDown
 
 Parameters:
   rcName: $rcName
-  az: $az
 
 Body: |
-  return scaleRcDown('{0} {1}'.format(args.rcName, args.az)).stdout
+  return scaleRcDown('{0}'.format(args.rcName)).stdout
 
 Scripts:
   scaleRcDown:

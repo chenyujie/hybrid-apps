@@ -16,8 +16,8 @@ Application:
   ?:
     type: io.murano.apps.huawei.EmallBackendCluster
   name: $.instanceConfiguration.name
-  emallNodes: repeat($minionNode, $.instanceConfiguration.minionCount)
-  nodeCount: $.instanceConfiguration.minionCount
+  emallNodes: repeat($minionNode, 3)
+  nodeCount: 3
   availabilityZones: $.instanceConfiguration.availabilityZones
   network: $.instanceConfiguration.network
 
@@ -44,15 +44,14 @@ Forms:
           errorMessages:
             invalid: Just letters, numbers, underscores, sharps and hyphens are allowed.
           label: Emall Backend hostname pattern
-        - name: minionCount
-          type: integer
-          label: Maximum number of minions
-          initial: 2
-          hidden: true
-          required: false
-          minValue: 1
-          description: >-
-            Select maximum number of minions
+#        - name: minionCount
+#          type: integer
+#          label: Maximum number of minions
+#          initial: 3
+#          required: false
+#          minValue: 1
+#          description: >-
+#            Select maximum number of minions
         - name: flavor
           type: flavor
           label: Instance flavor

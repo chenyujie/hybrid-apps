@@ -13,5 +13,3 @@ Classes:
  io.murano.apps.docker.kubernetes.KubernetesMinionNode: KubernetesMinionNode.yaml
 # io.murano.apps.docker.kubernetes.KubernetesGatewayNode: KubernetesGatewayNode.yaml
  io.murano.apps.docker.kubernetes.KubernetesNode: KubernetesNode.yaml
-Require:
-    io.murano.apps.docker.Interfaces:

@@ -124,42 +124,100 @@ Methods:
           - $outputs: $._environment.stack.output()
           - $.vip: $outputs.get($vip_name)
           - $.instance_uuids: list()
+          - $vm: format('{0}-{1}', $node.name, $node.id())
           - For: node
             In: $.emallNodes
             Do:
               - $new_instance_uuid:
                   az: $node.availabilityZone
-                  id: $outputs.get($node.name + '-id')
+                  id: $outputs.get($vm + '-id')
                   name: $node.name
               - $.instance_uuids: $.instance_uuids + list($new_instance_uuid)
           - $.setAttr(instance_uuids, $.instance_uuids)
           - Parallel:
               - Do: $.emallNodes.take($.nodeCount).pselect($.restart())
 
-          - $members: $.emallNodes[0].ipAddresses[0] + ',' + $.emallNodes[1].ipAddresses[0]
+          - $members: join(',', $.emallNodes.take($.nodeCount).select($.ipAddresses[0]))
+          - $._environment.reporter.report($, format('Cluster members are {0}', $members))
+
+#          - $.setupNode($.emallNodes[0], 'master', 'true', $members)
+#          - $idx: 1
+#          - While: $idx < $.nodeCount
+#            Do:
+#              - $.setupNode($.emallNodes[$idx], 'slave', 'false', $members)
+#              - $idx: $idx + 1
 
           - $._environment.reporter.report($, 'Configuring master node')
+#          - $.setupNode($.emallNodes[0], true, $members)
           - $resources: new(sys:Resources)
           - $template: $resources.yaml('EmallBackendCluster.template').bind(dict(
                 cluster => $.name,
                 members => $members,
-                name => 'master',
+                name => $.emallNodes[0].name,
                 master => 'true'
               ))
           - $.emallNodes[0].agent.call($template, $resources)
 
-          - $._environment.reporter.report($, 'Configuring slave node')
+#          - $ndx: 1
+#          - While: $ndx < $nodeCount
+#            Do:
+#              - $._environment.reporter.report($, 'Configuring node {0}'.format($.emallNodes[$ndx].name))
+#              - $resources: new(sys:Resources)
+#              - $template: $resources.yaml('EmallBackendCluster.template').bind(dict(
+#                    cluster => $.name,
+#                    members => $members,
+#                    name => $.emallNodes[$ndx].name,
+#                    master => 'false'
+#                  ))
+#              - $.emallNodes[$ndx].agent.call($template, $resources)
+#              - $ndx: $ndx + 1
+
+          - $._environment.reporter.report($, 'Configuring slave node 1')
           - $resources: new(sys:Resources)
           - $template: $resources.yaml('EmallBackendCluster.template').bind(dict(
                 cluster => $.name,
                 members => $members,
-                name => 'slave',
+                name => $.emallNodes[1].name,
                 master => 'false'
               ))
           - $.emallNodes[1].agent.call($template, $resources)
 
+          - $._environment.reporter.report($, 'Configuring slave node 2')
+          - $resources: new(sys:Resources)
+          - $template: $resources.yaml('EmallBackendCluster.template').bind(dict(
+                cluster => $.name,
+                members => $members,
+                name => $.emallNodes[2].name,
+                master => 'false'
+              ))
+          - $.emallNodes[2].agent.call($template, $resources)
+
           - $.setAttr(deployed, true)
           - $._environment.reporter.report($this, format('emall backend cluster server({0}) is up and running', $.vip))
+
+  setupNode:
+    Arguments:
+      - node:
+          Contract: $.class(res:LinuxMuranoInstance).notNull()
+      - master:
+          Contract: $.bool().notNull()
+      - members:
+          Contract: $.string().notNull()
+    Body: 
+      - $._environment.reporter.report($, format('Configuring {0} node', $node.name))
+      - $resources: new(sys:Resources)
+      - If: $master
+        Then:
+          - $mode: 'master'
+        Else:
+          - $mode: 'slave'
+      - $template: $resources.yaml('EmallBackendCluster.template').bind(dict(
+            cluster => $.name,
+            members => $members,
+            name => $node.name,
+            master => $mode
+          ))
+      - $node.agent.call($template, $resources)
 
   destroy:
     Body:
@@ -175,16 +233,17 @@ Methods:
       - node:
           Contract: $.class(res:LinuxMuranoInstance).notNull()
     Body:
+      - $vm: format('{0}-{1}', $node.name, $node.id())
       - $template:
           resources:
-            $node.name + '-member':
+            $vm + '-member':
               type: 'OS::Neutron::PoolMember'
               properties:
                 pool_id: {get_resource: $lb_id}
-                address: {get_attr: [$node.name, first_address]}
+                address: {get_attr: [$vm, first_address]}
                 protocol_port: 3306
           outputs:
-            $node.name + '-id':
+            $vm + '-id':
               value:
-                get_attr: [$node.name, show, id]
+                get_attr: [$vm, show, id]
       - $.template: $.template.mergeWith($template)
