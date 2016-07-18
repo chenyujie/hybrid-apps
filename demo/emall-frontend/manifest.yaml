@@ -1,0 +1,9 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.huawei.EmallFrontend
+Name: Emall Frontend
+Description: |
+Author: 'HUAWEI'
+Tags: [ Magento Web Servers ]
+Classes:
+ io.murano.apps.huawei.EmallFrontend: EmallFrontend.yaml

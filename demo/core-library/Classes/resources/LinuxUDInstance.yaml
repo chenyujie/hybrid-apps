@@ -1,0 +1,32 @@
+Namespaces:
+  =: io.murano.resources
+  std: io.murano
+
+Name: LinuxUDInstance
+
+Extends:
+  - LinuxInstance
+
+Methods:
+  initialize:
+    Body:
+      - $.customUserData: null
+      - $.format: HEAT_CFNTOOLS
+
+  prepareUserData:
+    Body:
+      - Return:
+          data: $.customUserData
+          format: $.format
+
+  setCustomUserData:
+    Arguments:
+      - data:
+          Contract: $.notNull()
+      - format:
+          Contract: $.string()
+    Body:
+      - $.customUserData: $data
+      - If: $format != null
+        Then:
+          - $.format: $format

@@ -1,0 +1,101 @@
+Namespaces:
+  =: io.murano.apps.huawei
+  res: io.murano.resources
+  std: io.murano
+  sys: io.murano.system
+
+Name: EmallFrontend
+
+Extends: std:Application
+
+Properties:  
+  name:
+    Contract: $.string().notNull()
+
+  emallBackend:
+    Contract: $.class(EmallBackend).notNull()
+
+  emallNodes:
+    Contract:
+      - $.class(res:LinuxUDInstance).notNull()
+      - 1
+    Usage: InOut
+
+  nodeCount:
+    Contract: $.int().notNull().check($ > 0)
+    Usage: InOut
+
+  emallLB:
+    Contract: $.class(LoadBalancer).notNull()
+
+Methods:
+  initialize:
+    Body:
+      - $._environment: $.find(std:Environment).require()
+      - $.template: {}
+
+  deploy:
+    Body:
+      - If: not $.getAttr(deployed, false)
+        Then:
+          - $net: $.emallBackend.instance.network
+          - $idx: 0
+          - While: $idx < $.nodeCount
+            Do:
+              - $.emallNodes[$idx].setNetwork($net)
+              - $idx: $idx + 1
+          - $securityGroupIngress:
+              - ToPort: 80
+                FromPort: 80
+                IpProtocol: tcp
+                External: true
+          - $._environment.securityGroupManager.addGroupIngress($securityGroupIngress)
+          - $._environment.reporter.report($this, 'creating emall frontend server...')
+          - Parallel:
+              - Do: $.emallBackend.deploy()
+              - Do: $.emallLB.deploy()
+          - $userdata: ('emall="dbip:{0},eip:{1}"').format($.emallBackend.getInnerIp(), $.emallLB.eip)
+          - Parallel:
+              - Do: $.emallNodes.take($.nodeCount).pselect($.setCustomUserData($userdata, 'RAW'))
+          - Parallel:
+              - Do: $.emallNodes.take($.nodeCount).pselect($.deploy())
+          - $._environment.stack.push()
+          - Parallel:
+              - Do: $.emallNodes.take($.nodeCount).pselect($.restart())
+          - For: node
+            In: $.emallNodes
+            Do:
+              - $.joinLB($.emallLB, $node)
+          - $._environment.stack.updateTemplate($.template)
+          - $.setAttr(template, $.template)
+          - $._environment.stack.push()
+          - $.setAttr(deployed, true)
+          - $._environment.reporter.report($this, format('emall frontend server ( http://{0} ) is up and running', $.emallLB.eip))
+
+  destroy:
+    Body:
+      - $template: $.getAttr(template, {})
+      - $._environment.stack.excludeTemplate($template)
+      - $._environment.stack.push()
+      - For: node
+        In: $.emallNodes
+        Do:
+          - $node.destroy()
+
+  joinLB:
+    Arguments:
+      - lb:
+          Contract: $.class(LoadBalancer).notNull()
+      - node:
+          Contract: $.class(res:LinuxUDInstance).notNull()
+    Body:
+      - $vm: format('{0}-{1}', $node.name, $node.id())
+      - $template:
+          resources:
+            $vm + '-member':
+              type: 'OS::Neutron::PoolMember'
+              properties:
+                pool_id: {get_resource: $.emallLB.lb_id}
+                address: {get_attr: [$vm, first_address]}
+                protocol_port: 80
+      - $.template: $.template.mergeWith($template)
