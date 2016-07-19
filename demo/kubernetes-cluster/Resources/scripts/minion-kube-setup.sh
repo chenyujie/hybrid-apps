@@ -24,7 +24,6 @@ cp -f default_scripts/kubelet /etc/default/
 service kubelet start
 service kube-proxy start
 
-RETRY=15
-while [[ $RETRY -gt 0 && ! `curl -s $1:8080 -o /dev/null` ]]; do sleep 2; RETRY=`expr $RETRY - 1`; done
+RETRY=15; while [[ $RETRY -gt 0 ]]; do curl --connect-timeout 3 -s $1:8080 -o /dev/null; if [ $? = 0 ]; then break; fi; sleep 2; RETRY=`expr $RETRY - 1`; done
 
 /opt/bin/kubectl -s $1:8080 label nodes $2 az=$3
