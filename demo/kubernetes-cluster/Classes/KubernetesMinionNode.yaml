@@ -85,3 +85,8 @@ Methods:
           - $._cluster.masterNode.instance.agent.call($template, $resources)
           - $._environment.reporter.report($this, 'Node {0} deleted'.format($.instance.name))
           - $.setAttr(nodeConfigured, false)
+
+  scaleUp:
+    Usage: Action
+    Body:
+      - Return: 'scaled'

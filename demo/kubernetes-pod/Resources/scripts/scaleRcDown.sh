@@ -6,4 +6,10 @@ then
   echo 'rc count is 1, cannot scale down'
   exit 
 fi
-/opt/bin/kubectl scale rc $1 --replicas=$((10#${rc}-1))
+
+if [ $2y = y ]
+then
+  /opt/bin/kubectl scale rc $1 --replicas=$((10#${rc}-1))
+else
+  /opt/bin/kubectl scale rc $1 --replicas=$((10#${rc}-1)) --scaleTo="$2"
+fi

@@ -10,26 +10,13 @@
 #  License for the specific language governing permissions and limitations
 #  under the License.
 
-FormatVersion: 2.0.0
-Version: 1.0.0
-Name: scaleRcUp
-
-Parameters:
-  rcName: $rcName
-  az: $az
-
-Body: |
-  if args.az:
-    return scaleRcUp('{0} {1}'.format(args.rcName, args.az)).stdout
-  else:
-    return scaleRcUp('{0}'.format(args.rcName)).stdout
-
-Scripts:
-  scaleRcUp:
-    Type: Application
-    Version: 1.0.0
-    EntryPoint: scaleRcUp.sh
-    Files: []
-    Options:
-      captureStdout: true
-      captureStderr: true
+Format: 1.0
+Type: Application
+FullName: io.murano.apps.docker.DockerEcshopFrontend
+Name: Docker Ecshop Frontend
+Description: |
+  ECSHOP-frontend Docker Application.
+Author: 'HUAWEI'
+Tags: [docker, application, ECSHOP]
+Classes:
+ io.murano.apps.docker.DockerEcshopFrontend: DockerEcshopFrontend.yaml

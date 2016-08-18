@@ -2,11 +2,12 @@ Version: 2
 
 Application:
   ?:
-    type: io.murano.apps.docker.DockerEmallFrontend
+    type: io.murano.apps.docker.DockerWordPress
   name: $.appConfiguration.name
   host: $.appConfiguration.host
+  mysql: $.appConfiguration.mysql
   publish: $.appConfiguration.publish
-  EmallBackendCluster: $.appConfiguration.EmallBackendCluster
+
 
 Forms:
   - appConfiguration:
@@ -19,7 +20,7 @@ Forms:
         - name: name
           type: string
           label: Application Name
-          initial: emall-docker-frontend
+          initial: DockerWordPress
           description: >-
             Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
             underline are allowed
@@ -29,6 +30,11 @@ Forms:
           label: Container Host
           description: >-
             Select an instance of Docker contaniner hosting provider to run the app
+        - name: mysql
+          type: io.murano.apps.docker.DockerMySQL
+          label: MySQL
+          description: >-
+            MySQL
         - name: publish
           type: boolean
           label: Visible from outside
@@ -36,8 +42,3 @@ Forms:
           required: false
           description: >-
             Check if you intend to access application from the Internet
-        - name: EmallBackendCluster
-          type: io.murano.apps.huawei.EmallBackendCluster
-          label: Mysql Database
-          description: >-
-            Emall Backend Database Cluster

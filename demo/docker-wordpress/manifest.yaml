@@ -1,0 +1,10 @@
+Format: 1.0
+Type: Application
+FullName: io.murano.apps.docker.DockerWordPress
+Name: Docker WordPress
+Description: |
+    The WordPress rich content management system can utilize plugins, widgets, and themes.
+Author: 'HUAWEI'
+Tags: [docker, application, httpd]
+Classes:
+ io.murano.apps.docker.DockerWordPress: DockerWordPress.yaml

@@ -67,20 +67,16 @@ Methods:
             Do:
               - $.joinLB($.emallLB, $node)
           - $._environment.stack.updateTemplate($.template)
-          - $.setAttr(template, $.template)
+#          - $.setAttr(template, $.template)
           - $._environment.stack.push()
           - $.setAttr(deployed, true)
           - $._environment.reporter.report($this, format('emall frontend server ( http://{0} ) is up and running', $.emallLB.eip))
 
-  destroy:
-    Body:
-      - $template: $.getAttr(template, {})
-      - $._environment.stack.excludeTemplate($template)
-      - $._environment.stack.push()
-      - For: node
-        In: $.emallNodes
-        Do:
-          - $node.destroy()
+#  destroy:
+#    Body:
+#      - $template: $.getAttr(template, {})
+#      - $._environment.stack.excludeTemplate($template)
+#      - $._environment.stack.push()
 
   joinLB:
     Arguments:

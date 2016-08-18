@@ -62,21 +62,23 @@ Methods:
       - If: $.defaultNetworks.flat != null
         Then:
           - $net: $.defaultNetworks.flat
-      - If: $net != null and $first
+      - If: $net != null
         Then:
           - $this.securityGroupManager: $net.generateSecurityGroupManager($this)
-          - $template:
-              resources:
-                $this.securityGroupManager.defaultGroupName:
-                  type: 'OS::Neutron::SecurityGroup'
-                  properties:
-                    description: format('Composite security group of Murano environment {0}', $.name)
-                    rules:
-                      - port_range_min: null
-                        port_range_max: null
-                        protocol: icmp
-                        remote_ip_prefix: '0.0.0.0/0'
-          - $this.stack.updateTemplate($template)
+          - If: $first
+            Then:
+            - $template:
+                resources:
+                  $this.securityGroupManager.defaultGroupName:
+                    type: 'OS::Neutron::SecurityGroup'
+                    properties:
+                      description: format('Composite security group of Murano environment {0}', $.name)
+                      rules:
+                        - port_range_min: null
+                          port_range_max: null
+                          protocol: icmp
+                          remote_ip_prefix: '0.0.0.0/0'
+            - $this.stack.updateTemplate($template)
 
   deploy:
     Usage: Action

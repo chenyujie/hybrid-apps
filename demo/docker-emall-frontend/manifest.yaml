@@ -20,5 +20,3 @@ Author: 'HUAWEI'
 Tags: [docker, application, DockerEmallFrontend]
 Classes:
  io.murano.apps.docker.DockerEmallFrontend: DockerEmallFrontend.yaml
-Require:
-  io.murano.apps.docker.kubernetes.KubernetesPod:

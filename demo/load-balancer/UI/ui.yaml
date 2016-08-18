@@ -1,0 +1,33 @@
+Version: 2
+
+Application:
+  ?:
+    type: io.murano.apps.huawei.LoadBalancer
+  name: $.cfg.name
+  network: $.cfg.network
+  assignFloatingIp: $.cfg.assignFloatingIP
+
+Forms:
+  - cfg:
+      fields:
+        - name: name
+          type: string
+          label: Application Name
+          initial: lb
+          description: >-
+            Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
+            underline are allowed
+        - name: assignFloatingIP
+          type: boolean
+          label: Assign Floating IP
+          description: >-
+             Select to true to assign floating IP automatically
+          initial: true
+          required: false
+        - name: network
+          type: network
+          label: Network
+          description: >-
+            Select the network where to place the instances.
+          required: true
+          

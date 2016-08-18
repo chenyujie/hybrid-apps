@@ -4,7 +4,7 @@
 # $2 - IP
 # $3 - AZ
 
-mkdir /var/log/kubernetes
+mkdir -p /var/log/kubernetes
 mkdir -p /var/run/murano-kubernetes
 
 sed -i.bkp "s/%%MASTER_IP%%/$1/g" default_scripts/kube-proxy
@@ -24,6 +24,4 @@ cp -f default_scripts/kubelet /etc/default/
 service kubelet start
 service kube-proxy start
 
-RETRY=15; while [[ $RETRY -gt 0 ]]; do curl --connect-timeout 3 -s $1:8080 -o /dev/null; if [ $? = 0 ]; then break; fi; sleep 2; RETRY=`expr $RETRY - 1`; done
-
-/opt/bin/kubectl -s $1:8080 label nodes $2 az=$3
+RETRY=15; while [[ $RETRY -gt 0 ]]; do /opt/bin/kubectl -s $1:8080 label nodes $2 az=$3; if [ $? = 0 ]; then break; fi; sleep 2; RETRY=`expr $RETRY - 1`; done

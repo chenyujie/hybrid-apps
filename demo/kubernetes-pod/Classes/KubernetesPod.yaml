@@ -367,9 +367,13 @@ Methods:
 
   scaleRcUp:
     Usage: Action
+    Arguments:
+      - az:
+          Contract: $.string()
+          Default: null
     Body:
       - $resources: new(sys:Resources)
-      - $template: $resources.yaml('scaleRcUp.template').bind(dict(rcName => $.name))
+      - $template: $resources.yaml('scaleRcUp.template').bind(dict(rcName => $.name, az => $az))
       - $.kubernetesCluster.masterNode.instance.agent.call($template, $resources)
 
 #  scaleRcUp:
@@ -382,7 +386,11 @@ Methods:
  
   scaleRcDown:
     Usage: Action
+    Arguments:
+      - az:
+          Contract: $.string()
+          Default: null
     Body:
       - $resources: new(sys:Resources)
-      - $template: $resources.yaml('scaleRcDown.template').bind(dict(rcName => $.name))
+      - $template: $resources.yaml('scaleRcDown.template').bind(dict(rcName => $.name, az => $az))
       - $.kubernetesCluster.masterNode.instance.agent.call($template, $resources)

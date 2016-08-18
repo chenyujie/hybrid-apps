@@ -1,6 +1,5 @@
 #!/bin/bash
 
-touch /etc/default/etcd
 sed -i.bkp "s/%%MASTER_IP%%/$1/g" default_scripts/flanneld
 sed -i.bkp "s/%%IP%%/$2/g" default_scripts/flanneld
 
@@ -19,9 +18,8 @@ do
   source /run/flannel/subnet.env 2> /dev/null
 done
 
-
-ip link set dev docker0 down
-brctl delbr docker0
+ip link set dev docker0 down || echo docker0 failed to be down
+brctl delbr docker0 || echo docker0 failed to be deleted
 
 echo DOCKER_OPTS=\"-H tcp://127.0.0.1:4243 -H unix:///var/run/docker.sock --bip=${FLANNEL_SUBNET} --mtu=${FLANNEL_MTU}\" > /etc/default/docker
 
@@ -30,3 +28,4 @@ iptables -t nat -A POSTROUTING -s 10.200.0.0/16 ! -d 10.200.0.0/16 -j MASQUERADE
 
 service docker restart
 
+touch /etc/default/etcd

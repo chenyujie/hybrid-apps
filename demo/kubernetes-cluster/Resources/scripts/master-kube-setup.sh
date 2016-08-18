@@ -45,8 +45,7 @@ REGISTRY=$3
 if [ ${REGISTRY}y = y ]; then REGISTRY='gcr.io'; fi
 sed -i.bkp "s/##DOCKER_REGISTRY##/$REGISTRY/g" default_scripts/kube-ui-rc.yaml
 
-RETRY=15
-while [[ $RETRY -gt 0 && ! `curl -s 127.0.0.1:8080 -o /dev/null` ]]; do sleep 2; RETRY=`expr $RETRY - 1`; done
+RETRY=15; while [[ $RETRY -gt 0 ]]; do curl --connect-timeout 3 -s 127.0.0.1:8080 -o /dev/null; if [ $? = 0 ]; then break; fi; sleep 2; RETRY=`expr $RETRY - 1`; done
 
 /opt/bin/kubectl create -f default_scripts/kube-ui-rc.yaml
 /opt/bin/kubectl create -f default_scripts/kube-ui-svc.yaml

@@ -1,0 +1,9 @@
+Format: 1.0
+Type: Environment
+FullName: io.murano.apps.huawei.LoadBalancer
+Name: Load Balancer
+Description: |
+Author: 'HUAWEI'
+Tags: [ Load Balancer ]
+Classes:
+ io.murano.apps.huawei.LoadBalancer: LoadBalancer.yaml

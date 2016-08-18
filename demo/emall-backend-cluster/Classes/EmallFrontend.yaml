@@ -219,13 +219,6 @@ Methods:
           ))
       - $node.agent.call($template, $resources)
 
-  destroy:
-    Body:
-      - For: node
-        In: $.emallNodes
-        Do:
-          - $node.destroy()
-
   joinLB:
     Arguments:
       - lb_id:

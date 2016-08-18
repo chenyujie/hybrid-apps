@@ -2,11 +2,11 @@ Version: 2
 
 Application:
   ?:
-    type: io.murano.apps.docker.DockerEmallFrontend
+    type: io.murano.apps.docker.DockerEcshopFrontend
   name: $.appConfiguration.name
   host: $.appConfiguration.host
   publish: $.appConfiguration.publish
-  EmallBackendCluster: $.appConfiguration.EmallBackendCluster
+  backend: $.appConfiguration.backend
 
 Forms:
   - appConfiguration:
@@ -19,7 +19,7 @@ Forms:
         - name: name
           type: string
           label: Application Name
-          initial: emall-docker-frontend
+          initial: ecshop-docker-frontend
           description: >-
             Enter a desired name for the application. Just A-Z, a-z, 0-9, dash and
             underline are allowed
@@ -36,8 +36,8 @@ Forms:
           required: false
           description: >-
             Check if you intend to access application from the Internet
-        - name: EmallBackendCluster
-          type: io.murano.apps.huawei.EmallBackendCluster
+        - name: backend
+          type: io.murano.apps.huawei.EcshopBackend
           label: Mysql Database
           description: >-
             Emall Backend Database Cluster
