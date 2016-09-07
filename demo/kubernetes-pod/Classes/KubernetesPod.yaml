@@ -376,14 +376,6 @@ Methods:
       - $template: $resources.yaml('scaleRcUp.template').bind(dict(rcName => $.name, az => $az))
       - $.kubernetesCluster.masterNode.instance.agent.call($template, $resources)
 
-#  scaleRcUp:
-#    Usage: Action
-#    Body:
-##      - $._cluster: $.find(KubernetesCluster).require()
-#      - $rc: f3
-#      - Return: $.kubernetesCluster.scaleRcUp(rcName => $rc)
-#      #- Return: $._cluster.masterNode.scaleRcUp(rcName => $rc)
- 
   scaleRcDown:
     Usage: Action
     Arguments:
